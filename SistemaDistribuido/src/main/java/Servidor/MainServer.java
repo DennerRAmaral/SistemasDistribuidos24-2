@@ -1,5 +1,7 @@
 package Servidor;
 
+import com.google.gson.Gson;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -9,6 +11,7 @@ public class MainServer extends Thread{
     protected Socket clientSocket;
 
     public static void main(String[] args) throws IOException {
+        Gson gson = new Gson();
         ServerSocket serverSocket = null;
         int serverport;
         Scanner scan = new Scanner(System.in);

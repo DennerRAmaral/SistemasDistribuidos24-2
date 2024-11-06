@@ -1,12 +1,14 @@
 package Cliente;
 
+import com.google.gson.Gson;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
 public class MainCliente {
     public static void main(String[] args) throws IOException {
-
+        Gson gson = new Gson();
         String serverHostname;
         int serverport;
         Scanner scan = new Scanner(System.in);
@@ -56,7 +58,7 @@ public class MainCliente {
 
         out.close();
         in.close();
-        stdIn.close();
+        //stdIn.close();
         echoSocket.close();
     }
 }

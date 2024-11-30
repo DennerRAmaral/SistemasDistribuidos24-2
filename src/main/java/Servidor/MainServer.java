@@ -21,15 +21,15 @@ public class MainServer extends Thread{
         serverport = scan.nextInt();
         try {
             serverSocket = new ServerSocket(serverport);
-            System.out.println("Connection Socket Created");
+            System.out.println("Soquete de conexao ok");
             try {
                 while (serverContinue) {
                     serverSocket.setSoTimeout(10000);
-                    System.out.println("Waiting for Connection");
+                    System.out.println("Aguardando...");
                     try {
                         new MainServer(serverSocket.accept());
                     } catch (SocketTimeoutException ste) {
-                        System.out.println("Timeout Occurred");
+                        System.out.println("Timeout");
                     }
                 }
             } catch (IOException e) {
@@ -37,7 +37,7 @@ public class MainServer extends Thread{
                 System.exit(1);
             }
         } catch (IOException e) {
-            System.err.println("Could not listen on port: 10008.");
+            System.err.println("Não pode ouvir a porta:"+serverport);
             System.exit(1);
         } finally {
             try {
@@ -55,7 +55,7 @@ public class MainServer extends Thread{
         start();
     }
     public void run() {
-        System.out.println("New Communication Thread Started");
+        System.out.println("Nova Thread iniciada");
 
         try {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),

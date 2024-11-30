@@ -1,21 +1,21 @@
-package Servidor;
+package Base;
 
 public class Usuario {
-    private int RA;
+    private String RA;
     private String Nome;
     private String senha;
 
-    public Usuario(int RA, String Nome, String senha){
+    public Usuario (String RA, String Nome, String senha){
         this.RA = RA;
         this.Nome = Nome;
         this.senha = senha;
     }
 
-    public int getRA() {
+    public String getRA() {
         return RA;
     }
 
-    private void setRA(int RA) {
+    private void setRA(String RA) {
         this.RA = RA;
     }
 

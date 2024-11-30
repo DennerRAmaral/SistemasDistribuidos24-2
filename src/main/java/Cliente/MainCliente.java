@@ -8,32 +8,37 @@ import java.util.*;
 
 public class MainCliente {
     public static void main(String[] args) throws IOException {
+        //Variavveis locais
         Gson gson = new Gson();
         String serverHostname;
         int serverport;
+        String userinput;
+        Socket soquete = null;
+        PrintWriter out = null;
+        BufferedReader in = null;
+        boolean continuar = false;
         Scanner scan = new Scanner(System.in);
+
+        //Insercao de server
         System.out.println("Insira o ip do server:");
         serverHostname = scan.nextLine();
         System.out.println("Insira a porta do server:");
         serverport = scan.nextInt();
 
-
+        //Conexao ao sistema
         if (args.length > 0)
             serverHostname = args[0];
-        System.out.println("Attemping to connect to host " +
-                serverHostname + " on port" + serverport);
-
-        Socket echoSocket = null;
-        PrintWriter out = null;
-        BufferedReader in = null;
-
+        System.out.println("Conectando a" +
+                serverHostname + " na porta " + serverport);
         try {
-            echoSocket = new Socket(serverHostname, serverport);
-            out = new PrintWriter(echoSocket.getOutputStream(), true);
+            soquete = new Socket(serverHostname, serverport);
+            out = new PrintWriter(soquete.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(
-                    echoSocket.getInputStream()));
+                    soquete.getInputStream()));
+            continuar = true;
+
         } catch (UnknownHostException e) {
-            System.err.println("Don't know about host: " + serverHostname);
+            System.err.println("Host desconhecido: " + serverHostname);
             System.exit(1);
         } catch (IOException e) {
             System.err.println("Couldn't get I/O for "
@@ -41,10 +46,31 @@ public class MainCliente {
             System.exit(1);
         }
 
-        BufferedReader stdIn = new BufferedReader(
-                new InputStreamReader(System.in));
-        String userInput;
-        String inputLine;
+
+        while (continuar) {
+            //System.out.println("Usuario padrao ou administrador?\n  1 - Padrao\n  2 - Administrador  \n  0 - sair");
+            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  9 - logout\n  0 - fechar");
+            userinput = scan.nextLine();
+            switch (userinput) {
+                case "1":
+                    efetuarlogin(scan);
+                    break;
+                case "2":
+                    System.out.println("s");
+                    break;
+                case "0":
+                    System.out.println("fechando aplicacao");
+                    continuar = false;
+                    break;
+                default:
+                    System.out.println("Opcao invalida\n\n");
+            }
+
+        }
+
+
+
+        /*
         System.out.print("input: ");
         while ((userInput = stdIn.readLine()) != null) {
             out.println(userInput);
@@ -54,11 +80,19 @@ public class MainCliente {
                 break;
             }
             System.out.print("input: ");
-        }
+        }*/
 
         out.close();
         in.close();
-        //stdIn.close();
-        echoSocket.close();
+        soquete.close();
+    }
+
+    private static void efetuarlogin(Scanner scan) {
+        System.out.println("Insira seu RA:");
+        String ra = scan.nextLine();
+        System.out.println("Insira sua senha:");
+        String senha = scan.nextLine();
+        new Login(ra, senha);
+
     }
 }

@@ -1,12 +1,12 @@
 package Servidor;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 
 import java.io.*;
 import java.net.*;
 import java.util.*;
 
-public class MainServer extends Thread{
+public class MainServer extends Thread {
     protected static boolean serverContinue = true;
     protected Socket clientSocket;
 
@@ -27,7 +27,7 @@ public class MainServer extends Thread{
                     serverSocket.setSoTimeout(10000);
                     System.out.println("Aguardando...");
                     try {
-                        new MainServer(serverSocket.accept());
+                        new MainServer(serverSocket.accept(), gson);
                     } catch (SocketTimeoutException ste) {
                         System.out.println("Timeout");
                     }
@@ -37,23 +37,25 @@ public class MainServer extends Thread{
                 System.exit(1);
             }
         } catch (IOException e) {
-            System.err.println("Não pode ouvir a porta:"+serverport);
+            System.err.println("Não pode ouvir a porta:" + serverport);
             System.exit(1);
         } finally {
             try {
-                System.out.println("Closing Server Connection Socket");
+                System.out.println("Fechando soquete");
                 serverSocket.close();
             } catch (IOException e) {
                 System.err.println("Could not close port: 10008.");
                 System.exit(1);
             }
         }
-        //serverSocket.close();
+        serverSocket.close();
     }
-    private MainServer(Socket clientSoc) {
+
+    private MainServer(Socket clientSoc, Gson gson) {
         clientSocket = clientSoc;
         start();
     }
+
     public void run() {
         System.out.println("Nova Thread iniciada");
 
@@ -66,20 +68,8 @@ public class MainServer extends Thread{
             String inputLine;
 
             while ((inputLine = in.readLine()) != null) {
-                System.out.println("Server: " + inputLine);
-
-                if (inputLine.equals("?"))
-                    inputLine = new String("\"Bye.\" ends Client, " +
-                            "\"End Server.\" ends Server");
-                inputLine = inputLine.toUpperCase();
-                out.println(inputLine);
-
-
-                if (inputLine.equals("Bye."))
-                    break;
-
-                if (inputLine.equals("End Server."))
-                    serverContinue = false;
+                action(inputLine);
+                serverContinue = false;
             }
 
             out.close();
@@ -89,6 +79,23 @@ public class MainServer extends Thread{
             System.err.println("Problem with Communication Server");
             System.exit(1);
         }
+    }
+    public String action(String json){
+        Gson geson = new Gson();
+        System.out.println(json);
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject(); // PARSER
+        String operacao = jsonObject.get("operacao").getAsString();
+        switch (operacao){
+            case "login": return login(json);
+            default: return ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
+
+        }
+
+
+    }
+
+    public String login(String json){
+        return "sa";
     }
 
 }

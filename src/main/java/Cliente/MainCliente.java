@@ -1,6 +1,8 @@
 package Cliente;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.*;
 import java.net.*;
@@ -24,6 +26,7 @@ public class MainCliente {
         serverHostname = scan.nextLine();
         System.out.println("Insira a porta do server:");
         serverport = scan.nextInt();
+        scan.nextLine();
 
         //Conexao ao sistema
         if (args.length > 0)
@@ -53,7 +56,7 @@ public class MainCliente {
             userinput = scan.nextLine();
             switch (userinput) {
                 case "1":
-                    efetuarlogin(scan);
+                    efetuarlogin(scan, gson, out, in);
                     break;
                 case "2":
                     System.out.println("s");
@@ -63,7 +66,7 @@ public class MainCliente {
                     continuar = false;
                     break;
                 default:
-                    System.out.println("Opcao invalida\n\n");
+                    System.out.println("Opcao invalida\n");
             }
 
         }
@@ -87,12 +90,15 @@ public class MainCliente {
         soquete.close();
     }
 
-    private static void efetuarlogin(Scanner scan) {
-        System.out.println("Insira seu RA:");
+    private static void efetuarlogin(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) {
+        System.out.println("====\nInsira seu RA:");
         String ra = scan.nextLine();
         System.out.println("Insira sua senha:");
         String senha = scan.nextLine();
-        new Login(ra, senha);
+        Login login = new Login(ra, senha);
+        String json = gson.toJson(login);
+        System.out.println(json);
+        out.println(json);
 
     }
 }

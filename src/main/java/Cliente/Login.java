@@ -1,20 +1,22 @@
 package Cliente;
 
 public class Login {
-    private String RA;
+    private final String operacao;
+    private String ra;
     private String senha;
 
-    public Login (String RA, String senha){
-        this.RA = RA;
-        this.senha = senha;
+    public Login(String ra, String senha) {
+        this.operacao = "login";
+        this.ra = ra;
+        this.setSenha(senha);
     }
 
     public String getRA() {
-        return RA;
+        return ra;
     }
 
-    public void setRA(String RA) {
-        this.RA = RA;
+    public void setRA(String ra) {
+        this.ra = ra;
     }
 
     public String getSenha() {
@@ -23,5 +25,9 @@ public class Login {
 
     public void setSenha(String senha) {
         this.senha = senha;
+    }
+
+    public String getOperacao() {
+        return operacao;
     }
 }

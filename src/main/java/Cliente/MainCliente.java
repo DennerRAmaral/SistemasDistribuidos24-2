@@ -9,6 +9,7 @@ import java.net.*;
 import java.util.*;
 
 public class MainCliente {
+    static String token = "";
     public static void main(String[] args) throws IOException {
         //Variavveis locais
         Gson gson = new Gson();
@@ -20,6 +21,7 @@ public class MainCliente {
         BufferedReader in = null;
         boolean continuar = false;
         Scanner scan = new Scanner(System.in);
+
 
         //Insercao de server
         System.out.println("Insira o ip do server:");
@@ -56,7 +58,7 @@ public class MainCliente {
             userinput = scan.nextLine();
             switch (userinput) {
                 case "1":
-                    efetuarlogin(scan, gson, out, in);
+                    MainCliente.efetuarlogin(scan, gson, out, in);
                     break;
                 case "2":
                     System.out.println("s");
@@ -90,15 +92,25 @@ public class MainCliente {
         soquete.close();
     }
 
-    private static void efetuarlogin(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) {
+    protected static void efetuarlogin(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
         System.out.println("====\nInsira seu RA:");
         String ra = scan.nextLine();
+        String retorno;
         System.out.println("Insira sua senha:");
         String senha = scan.nextLine();
         Login login = new Login(ra, senha);
         String json = gson.toJson(login);
-        System.out.println(json);
+        System.out.println("Enviando ao server:"+json);
         out.println(json);
+        retorno = in.readLine();
+        System.out.println("Recebido do Server: "+retorno);
+        JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+        if (retornojson.get("status").getAsInt()==200){
+            System.out.println("Login efetuado");
+            token = retornojson.get("token").getAsString();
+        }else {
+            System.out.println(retornojson.get("mensagem").getAsString());
 
+        }
     }
 }

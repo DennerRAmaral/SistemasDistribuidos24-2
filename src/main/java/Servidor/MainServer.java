@@ -1,5 +1,6 @@
 package Servidor;
 
+import Base.Usuario;
 import com.google.gson.*;
 
 import java.io.*;
@@ -7,11 +8,14 @@ import java.net.*;
 import java.util.*;
 
 public class MainServer extends Thread {
-    protected static boolean serverContinue = true;
     protected Socket clientSocket;
+    public static ArrayList<Usuario> usuarios;
+    public static ArrayList<String> logados;
 
     public static void main(String[] args) throws IOException {
-        Gson gson = new Gson();
+        usuarios = new ArrayList<Usuario>();
+        logados = new ArrayList<String>();
+        usuarios.add(new Usuario("1234567", "Admin", "abretesesamo"));
         ServerSocket serverSocket = null;
         int serverport;
         Scanner scan = new Scanner(System.in);
@@ -23,11 +27,11 @@ public class MainServer extends Thread {
             serverSocket = new ServerSocket(serverport);
             System.out.println("Soquete de conexao ok");
             try {
-                while (serverContinue) {
+                while (true) {
                     serverSocket.setSoTimeout(10000);
                     System.out.println("Aguardando...");
                     try {
-                        new MainServer(serverSocket.accept(), gson);
+                        new MainServer(serverSocket.accept());
                     } catch (SocketTimeoutException ste) {
                         System.out.println("Timeout");
                     }
@@ -48,10 +52,9 @@ public class MainServer extends Thread {
                 System.exit(1);
             }
         }
-        serverSocket.close();
     }
 
-    private MainServer(Socket clientSoc, Gson gson) {
+    private MainServer(Socket clientSoc) {
         clientSocket = clientSoc;
         start();
     }
@@ -66,10 +69,13 @@ public class MainServer extends Thread {
                     new InputStreamReader(clientSocket.getInputStream()));
 
             String inputLine;
+            String retorno;
 
             while ((inputLine = in.readLine()) != null) {
-                action(inputLine);
-                serverContinue = false;
+                System.out.println("Recebido pelo server: " + inputLine);
+                retorno = action(inputLine);
+                System.out.println("Enviando ao cliente: " + retorno);
+                out.println(retorno);
             }
 
             out.close();
@@ -80,22 +86,38 @@ public class MainServer extends Thread {
             System.exit(1);
         }
     }
-    public String action(String json){
-        Gson geson = new Gson();
+
+    public static String action(String json) {
         System.out.println(json);
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject(); // PARSER
         String operacao = jsonObject.get("operacao").getAsString();
-        switch (operacao){
-            case "login": return login(json);
-            default: return ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
-
-        }
+        return switch (operacao) {
+            case "login" -> login(json);
+            default ->
+                    ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
+        };
 
 
     }
 
-    public String login(String json){
-        return "sa";
+    public static String login(String json) {
+        Validador valido = new Validador(json);
+        JsonObject logindata = JsonParser.parseString(json).getAsJsonObject();
+        if (valido.temcamponulo() || valido.loginincorreto()) {
+            return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+        } else {
+            for (Usuario user : usuarios) {
+                if ((logindata.get("ra").getAsString()).equals(user.getRA())) {
+                    if ((logindata.get("senha").getAsString()).equals(user.getSenha())) {
+                        logados.add(logindata.get("ra").getAsString());
+                        return "{\"operacao\": \"login\",\"status\": 200 , \"token\":  \"" + logindata.get("ra").getAsString() + "\"}";
+                    }else {
+                        return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Credenciais incorretas.\"}";
+                    }
+                }
+            }
+            return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Credenciais incorretas.\"}";
+        }
     }
 
 }

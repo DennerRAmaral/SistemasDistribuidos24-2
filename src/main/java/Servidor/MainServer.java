@@ -5,24 +5,33 @@ import com.google.gson.*;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class MainServer extends Thread {
     protected Socket clientSocket;
     public static ArrayList<Usuario> usuarios;
     public static ArrayList<String> logados;
+    public static String fileName = "arquivos.txt";
 
     public static void main(String[] args) throws IOException {
-        usuarios = new ArrayList<Usuario>();
-        logados = new ArrayList<String>();
-        usuarios.add(new Usuario("1234567", "Admin", "abretesesamo"));
+        usuarios = new ArrayList<>();
+        logados = new ArrayList<>();
+        Gson geson = new Gson();
+
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(fileName));
+            for (String line : lines) {
+                criausuario(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         ServerSocket serverSocket = null;
-        int serverport;
-        Scanner scan = new Scanner(System.in);
+        int serverport = 25000;
         InetAddress localHost = InetAddress.getLocalHost();
-        System.out.println("Ip do servidor: " + localHost);
-        System.out.println("Insira a porta do server:");
-        serverport = scan.nextInt();
+        System.out.println("Ip do servidor: " + localHost + "\nPorta de conexao: " + serverport);
         try {
             serverSocket = new ServerSocket(serverport);
             System.out.println("Soquete de conexao ok");
@@ -46,7 +55,8 @@ public class MainServer extends Thread {
         } finally {
             try {
                 System.out.println("Fechando soquete");
-                serverSocket.close();
+                assert serverSocket != null;
+                Objects.requireNonNull(serverSocket).close();
             } catch (IOException e) {
                 System.err.println("Could not close port: 10008.");
                 System.exit(1);
@@ -93,6 +103,7 @@ public class MainServer extends Thread {
         String operacao = jsonObject.get("operacao").getAsString();
         return switch (operacao) {
             case "login" -> login(json);
+            case "logout" -> logout(json);
             default ->
                     ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -109,9 +120,14 @@ public class MainServer extends Thread {
             for (Usuario user : usuarios) {
                 if ((logindata.get("ra").getAsString()).equals(user.getRA())) {
                     if ((logindata.get("senha").getAsString()).equals(user.getSenha())) {
-                        logados.add(logindata.get("ra").getAsString());
-                        return "{\"operacao\": \"login\",\"status\": 200 , \"token\":  \"" + logindata.get("ra").getAsString() + "\"}";
-                    }else {
+                        if (logados.contains(logindata.get("ra").getAsString())) {
+                            System.out.println("Usuario ja logado");
+                            return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Usuario ja logado\"}";
+                        } else {
+                            logados.add(logindata.get("ra").getAsString());
+                            return "{\"operacao\": \"login\",\"status\": 200 , \"token\":  \"" + logindata.get("ra").getAsString() + "\"}";
+                        }
+                    } else {
                         return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Credenciais incorretas.\"}";
                     }
                 }
@@ -120,4 +136,33 @@ public class MainServer extends Thread {
         }
     }
 
+    public static String logout(String json) {
+        Validador valido = new Validador(json);
+        JsonObject logoutdata = JsonParser.parseString(json).getAsJsonObject();
+        if (valido.logoutincorreto()) {
+            return "{\"status\": 401 ,\"operacao\": \"logout\",\"mensagem\":  \"Não foi possível ler o json recebido.\"}";
+        } else {
+            String token = logoutdata.get("token").getAsString();
+            if (logados.contains(token)) {
+                boolean sucessologout = logados.remove(token);
+                if (sucessologout) {
+                    return "{\"operacao\": \"logout\", \"status\": 200 }";
+                }
+            }
+            return "{\"status\": 401 ,\"operacao\": \"logout\",\"mensagem\":  \"Erro ao realizar logout.\"}";
+        }
+    }
+
+    public static void criausuario(String json) {
+        Validador valido = new Validador(json);
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        if (valido.usuarioinvalido()) {
+            System.out.println("Insercao de usuario invalida");;
+        } else {
+            String ra = usuariodata.get("ra").getAsString();
+            String nome = usuariodata.get("nome").getAsString();
+            String senha = usuariodata.get("senha").getAsString();
+            usuarios.add(new Usuario(ra, nome, senha));
+        }
+    }
 }

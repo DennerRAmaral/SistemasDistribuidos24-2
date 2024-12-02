@@ -43,4 +43,29 @@ public class Validador {
         }
         return temerro;
     }
+
+    public boolean logoutincorreto(){
+        boolean temerro = true;
+        if (jobject.has("token")){
+            String token = jobject.get("token").getAsString();
+            if (token.chars().allMatch(Character::isDigit)){
+                temerro = false;
+            }
+        }
+        return temerro;
+    }
+
+    public boolean usuarioinvalido(){
+        boolean temerro = true;
+        if (jobject.has("ra")){
+            if (jobject.has("nome")){
+                if (jobject.has("senha")){
+                    temerro = false;
+                }
+            }
+        }
+        return temerro;
+    }
+
+
 }

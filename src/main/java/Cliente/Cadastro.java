@@ -1,14 +1,16 @@
 package Cliente;
 
-public class Login {
+public class Cadastro {
     private final String operacao;
     private int ra;
     private String senha;
+    private String nome;
 
-    public Login(int ra, String senha) {
-        this.operacao = "login";
+    public Cadastro(int ra, String senha, String nome) {
+        this.operacao = "cadastrarUsuario";
         this.ra = ra;
         this.setSenha(senha);
+        this.nome = nome;
     }
 
     public int getRA() {

@@ -1,15 +1,22 @@
 package Cliente;
 
+import Base.Usuario;
+import Servidor.Validador;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Scanner;
 
 public class MainCliente {
     public static String token = "";
+
     public static void main(String[] args) throws IOException {
         //Variavveis locais
         Gson gson = new Gson();
@@ -60,6 +67,9 @@ public class MainCliente {
                 case "1":
                     MainCliente.efetuarlogin(scan, gson, out, in);
                     break;
+                case "2":
+                    MainCliente.efetuarCadastro(scan, gson, out, in);
+                    break;
                 case "3":
                     MainCliente.efetuarlogout(gson, out, in);
                     break;
@@ -72,69 +82,90 @@ public class MainCliente {
             }
 
         }
-
-
-
-        /*
-        System.out.print("input: ");
-        while ((userInput = stdIn.readLine()) != null) {
-            out.println(userInput);
-            inputLine = in.readLine();
-            System.out.println("echo: " + inputLine);
-            if (inputLine.equals("BYE")) {
-                break;
-            }
-            System.out.print("input: ");
-        }*/
-
         out.close();
         in.close();
         soquete.close();
     }
 
     protected static void efetuarlogin(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
-        if (token.isEmpty()){
+        if (token.isEmpty()) {
             System.out.println("====\nInsira seu RA:");
-            String ra = scan.nextLine();
+            int ra = scan.nextInt();
+            scan.nextLine();
             String retorno;
             System.out.println("Insira sua senha:");
             String senha = scan.nextLine();
             Login login = new Login(ra, senha);
             String json = gson.toJson(login);
-            System.out.println("Enviando ao server:"+json);
+            System.out.println("Enviando ao server:" + json);
             out.println(json);
             retorno = in.readLine();
-            System.out.println("Recebido do Server: "+retorno);
+            System.out.println("Recebido do Server: " + retorno);
             JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
-            if (retornojson.get("status").getAsInt()==200){
+            if (retornojson.get("status").getAsInt() == 200) {
                 System.out.println("Login efetuado");
                 token = retornojson.get("token").getAsString();
-            }else {
+            } else {
                 System.out.println(retornojson.get("mensagem").getAsString());
 
             }
-        }else {
+        } else {
             System.out.println("Ainda esta logado");
         }
 
     }
 
+
+    protected static void efetuarCadastro(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("====\nInsira seu RA:");
+            int ra = scan.nextInt();
+            scan.nextLine();
+            System.out.println("Insira seu nome:");
+            String nome = scan.nextLine();
+            String retorno;
+            System.out.println("Insira sua senha:");
+            String senha = scan.nextLine();
+            Usuario usuario = new Usuario(ra, nome, senha);
+            String json = gson.toJson(usuario);
+            Validador valid = new Validador(json);
+            if (!(valid.usuarioinvalido())) {
+                Cadastro cad = new Cadastro(ra, senha, nome);
+                json = gson.toJson(cad);
+                System.out.println("Enviando ao server:" + json);
+                out.println(json);
+                retorno = in.readLine();
+                System.out.println("Recebido do Server: " + retorno);
+                JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+                if (retornojson.get("status").getAsInt() == 200) {
+                    System.out.println("Cadastro efetuado");
+                    token = retornojson.get("token").getAsString();
+                } else {
+                    System.out.println(retornojson.get("mensagem").getAsString());
+
+                }
+            }
+        } else {
+            System.out.println("Ainda esta logado");
+        }
+    }
+
     protected static void efetuarlogout(Gson gson, PrintWriter out, BufferedReader in) throws IOException {
-        if (token.isEmpty()){
+        if (token.isEmpty()) {
             System.out.println("Nao esta logado ainda");
-        }else {
+        } else {
             Logout logout = new Logout(token);
             String json = gson.toJson(logout);
             String retorno;
-            System.out.println("Enviando ao server:"+json);
+            System.out.println("Enviando ao server:" + json);
             out.println(json);
             retorno = in.readLine();
-            System.out.println("Recebido do Server: "+retorno);
+            System.out.println("Recebido do Server: " + retorno);
             JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
-            if (retornojson.get("status").getAsInt()==200){
+            if (retornojson.get("status").getAsInt() == 200) {
                 System.out.println("Logout efetuado");
                 token = "";
-            }else {
+            } else {
                 System.out.println(retornojson.get("mensagem").getAsString());
 
             }

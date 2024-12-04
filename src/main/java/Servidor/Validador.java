@@ -1,6 +1,8 @@
 package Servidor;
 
-import com.google.gson.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Validador {
     protected String json;
@@ -27,14 +29,14 @@ public class Validador {
     public boolean loginincorreto() { //retorna True quando a campos de login invalidos
         boolean temerro = false;
         if (jobject.has("ra") && jobject.has("senha")) {
-            String ra = jobject.get("ra").getAsString();
+            //int ra = jobject.get("ra").getAsString();
             String senha = jobject.get("senha").getAsString();
-            if (ra.length() == 7 && ra.chars().allMatch(Character::isDigit)) {
-                if (senha.matches("[a-zA-Z]{8,20}")) {
-                    System.out.println("Dados de login corretos");
-                } else {
+            /*if (ra.length() == 7 && ra.chars().allMatch(Character::isDigit)) {*/
+            if (senha.matches("[a-zA-Z]{8,20}")) {
+                System.out.println("Dados de login corretos");
+               /* } else {
                     temerro = true;
-                }
+                }*/
             } else {
                 temerro = true;
             }
@@ -44,23 +46,25 @@ public class Validador {
         return temerro;
     }
 
-    public boolean logoutincorreto(){
+    public boolean logoutincorreto() {
         boolean temerro = true;
-        if (jobject.has("token")){
+        if (jobject.has("token")) {
             String token = jobject.get("token").getAsString();
-            if (token.chars().allMatch(Character::isDigit)){
+            if (token.chars().allMatch(Character::isDigit)) {
                 temerro = false;
             }
         }
         return temerro;
     }
 
-    public boolean usuarioinvalido(){
+    public boolean usuarioinvalido() {
         boolean temerro = true;
-        if (jobject.has("ra")){
-            if (jobject.has("nome")){
-                if (jobject.has("senha")){
-                    temerro = false;
+        if (jobject.has("ra")) {
+            if (jobject.has("nome")) {
+                if (jobject.has("senha")) {
+                    String senha = jobject.get("senha").getAsString();
+                    if (senha.matches("[a-zA-Z]{8,20}"))
+                        temerro = false;
                 }
             }
         }

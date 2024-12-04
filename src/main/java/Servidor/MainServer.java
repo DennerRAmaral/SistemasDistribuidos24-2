@@ -1,13 +1,23 @@
 package Servidor;
 
 import Base.Usuario;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class MainServer extends Thread {
     protected Socket clientSocket;
@@ -23,7 +33,7 @@ public class MainServer extends Thread {
         try {
             List<String> lines = Files.readAllLines(Paths.get(fileName));
             for (String line : lines) {
-                criausuario(line);
+                criarusuario(line);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -73,10 +83,8 @@ public class MainServer extends Thread {
         System.out.println("Nova Thread iniciada");
 
         try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(),
-                    true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
             String inputLine;
             String retorno;
@@ -103,6 +111,7 @@ public class MainServer extends Thread {
         String operacao = jsonObject.get("operacao").getAsString();
         return switch (operacao) {
             case "login" -> login(json);
+            case "cadastrarUsuario" -> cadastrarUsuario(json);
             case "logout" -> logout(json);
             default ->
                     ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
@@ -118,13 +127,13 @@ public class MainServer extends Thread {
             return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
         } else {
             for (Usuario user : usuarios) {
-                if ((logindata.get("ra").getAsString()).equals(user.getRA())) {
+                if ((logindata.get("ra").getAsInt()) == user.getRA()) {
                     if ((logindata.get("senha").getAsString()).equals(user.getSenha())) {
                         if (logados.contains(logindata.get("ra").getAsString())) {
                             System.out.println("Usuario ja logado");
                             return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Usuario ja logado\"}";
                         } else {
-                            logados.add(logindata.get("ra").getAsString());
+                            logados.add(String.valueOf(logindata.get("ra").getAsInt()));
                             return "{\"operacao\": \"login\",\"status\": 200 , \"token\":  \"" + logindata.get("ra").getAsString() + "\"}";
                         }
                     } else {
@@ -133,6 +142,23 @@ public class MainServer extends Thread {
                 }
             }
             return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Credenciais incorretas.\"}";
+        }
+    }
+
+    public static String cadastrarUsuario(String json) {
+        Validador valido = new Validador(json);
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        if (valido.usuarioinvalido()) {
+            return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuario\",\"mensagem\":  \"Os campos recebidos sao invalidos\"}";
+        } else {
+            int ra = usuariodata.get("ra").getAsInt();
+            for (Usuario user : usuarios) {
+                if (ra == user.getRA()) {
+                    return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuario\",\"mensagem\":  \"Não foi cadastrar pois o usuario informado ja existe\"}";
+                }
+            }
+            criarusuario(json);
+            return "{ \"status\": 201, \"operacao\": \"cadastrarUsuario\",\"mensagem\":  \"Cadastro realizado com sucesso.\"}";
         }
     }
 
@@ -153,13 +179,14 @@ public class MainServer extends Thread {
         }
     }
 
-    public static void criausuario(String json) {
+    public static void criarusuario(String json) {
         Validador valido = new Validador(json);
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         if (valido.usuarioinvalido()) {
-            System.out.println("Insercao de usuario invalida");;
+            System.out.println("Insercao de usuario invalida");
+            ;
         } else {
-            String ra = usuariodata.get("ra").getAsString();
+            int ra = usuariodata.get("ra").getAsInt();
             String nome = usuariodata.get("nome").getAsString();
             String senha = usuariodata.get("senha").getAsString();
             usuarios.add(new Usuario(ra, nome, senha));

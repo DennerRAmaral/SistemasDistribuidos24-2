@@ -106,7 +106,6 @@ public class MainServer extends Thread {
     }
 
     public static String action(String json) {
-        System.out.println(json);
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject(); // PARSER
         String operacao = jsonObject.get("operacao").getAsString();
         return switch (operacao) {
@@ -184,7 +183,6 @@ public class MainServer extends Thread {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         if (valido.usuarioinvalido()) {
             System.out.println("Insercao de usuario invalida");
-            ;
         } else {
             int ra = usuariodata.get("ra").getAsInt();
             String nome = usuariodata.get("nome").getAsString();

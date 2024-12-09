@@ -126,7 +126,7 @@ public class MainServer extends Thread {
             return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
         } else {
             for (Usuario user : usuarios) {
-                if ((logindata.get("ra").getAsInt()) == user.getRA()) {
+                if ((logindata.get("ra").getAsString()).equals(user.getRA())) {
                     if ((logindata.get("senha").getAsString()).equals(user.getSenha())) {
                         if (logados.contains(logindata.get("ra").getAsString())) {
                             System.out.println("Usuario ja logado");
@@ -150,9 +150,9 @@ public class MainServer extends Thread {
         if (valido.usuarioinvalido()) {
             return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuario\",\"mensagem\":  \"Os campos recebidos sao invalidos\"}";
         } else {
-            int ra = usuariodata.get("ra").getAsInt();
+            String ra = usuariodata.get("ra").getAsString();
             for (Usuario user : usuarios) {
-                if (ra == user.getRA()) {
+                if (ra.equals(user.getRA()) ) {
                     return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuario\",\"mensagem\":  \"Não foi cadastrar pois o usuario informado ja existe\"}";
                 }
             }
@@ -184,7 +184,7 @@ public class MainServer extends Thread {
         if (valido.usuarioinvalido()) {
             System.out.println("Insercao de usuario invalida");
         } else {
-            int ra = usuariodata.get("ra").getAsInt();
+            String ra = usuariodata.get("ra").getAsString();
             String nome = usuariodata.get("nome").getAsString();
             String senha = usuariodata.get("senha").getAsString();
             usuarios.add(new Usuario(ra, nome, senha));

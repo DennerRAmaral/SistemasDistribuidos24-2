@@ -2,22 +2,22 @@ package Cliente;
 
 public class Cadastro {
     private final String operacao;
-    private int ra;
+    private String ra;
     private String senha;
     private String nome;
 
-    public Cadastro(int ra, String senha, String nome) {
+    public Cadastro(String ra, String senha, String nome) {
         this.operacao = "cadastrarUsuario";
         this.ra = ra;
         this.setSenha(senha);
         this.nome = nome;
     }
 
-    public int getRA() {
+    public String getRA() {
         return ra;
     }
 
-    public void setRA(int ra) {
+    public void setRA(String ra) {
         this.ra = ra;
     }
 

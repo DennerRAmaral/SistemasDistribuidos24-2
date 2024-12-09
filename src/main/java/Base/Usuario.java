@@ -1,21 +1,21 @@
 package Base;
 
 public class Usuario {
-    private int ra;
+    private String ra;
     private String nome;
     private String senha;
 
-    public Usuario(int RA, String Nome, String senha) {
+    public Usuario(String RA, String Nome, String senha) {
         this.ra = RA;
         this.nome = Nome;
         this.senha = senha;
     }
 
-    public int getRA() {
+    public String getRA() {
         return ra;
     }
 
-    private void setRA(int RA) {
+    private void setRA(String RA) {
         this.ra = RA;
     }
 

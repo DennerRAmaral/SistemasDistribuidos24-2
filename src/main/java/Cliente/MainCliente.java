@@ -40,8 +40,7 @@ public class MainCliente {
         //Conexao ao sistema
         if (args.length > 0)
             serverHostname = args[0];
-        System.out.println("Conectando a " +
-                serverHostname + " na porta " + serverport);
+        System.out.println("Conectando a " + serverHostname + " na porta " + serverport);
         try {
             soquete = new Socket(serverHostname, serverport);
             out = new PrintWriter(soquete.getOutputStream(), true);
@@ -53,8 +52,7 @@ public class MainCliente {
             System.err.println("Host desconhecido: " + serverHostname);
             System.exit(1);
         } catch (IOException e) {
-            System.err.println("Couldn't get I/O for "
-                    + "the connection to: " + serverHostname);
+            System.err.println("Couldn't get I/O for " + "the connection to: " + serverHostname);
             System.exit(1);
         }
 
@@ -90,8 +88,7 @@ public class MainCliente {
     protected static void efetuarlogin(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
         if (token.isEmpty()) {
             System.out.println("====\nInsira seu RA:");
-            int ra = scan.nextInt();
-            scan.nextLine();
+            String ra = scan.nextLine();
             String retorno;
             System.out.println("Insira sua senha:");
             String senha = scan.nextLine();
@@ -118,15 +115,14 @@ public class MainCliente {
 
     protected static void efetuarCadastro(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
         if (token.isEmpty()) {
-            System.out.println("====\nInsira seu RA:");
-            int ra = scan.nextInt();
-            scan.nextLine();
-            System.out.println("Insira seu nome:");
+            System.out.println("====\nInsira seu RA (7 digitos):");
+            String ra = scan.nextLine();
+            System.out.println("Insira seu nome (Apenas letrasmaiusculas maiusculas):");
             String nome = scan.nextLine();
             String retorno;
-            System.out.println("Insira sua senha:");
+            System.out.println("Insira sua senha (Entre 8 e 50 letras):");
             String senha = scan.nextLine();
-            Usuario usuario = new Usuario(ra, nome, senha);
+            Usuario usuario = new Usuario(ra, nome,senha);
             String json = gson.toJson(usuario);
             Validador valid = new Validador(json);
             if (!(valid.usuarioinvalido())) {
@@ -144,6 +140,8 @@ public class MainCliente {
                     System.out.println(retornojson.get("mensagem").getAsString());
 
                 }
+            }else {
+                System.out.println("Dados de usuario invalidos\n");
             }
         } else {
             System.out.println("Ainda esta logado");

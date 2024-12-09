@@ -29,14 +29,14 @@ public class Validador {
     public boolean loginincorreto() { //retorna True quando a campos de login invalidos
         boolean temerro = false;
         if (jobject.has("ra") && jobject.has("senha")) {
-            //int ra = jobject.get("ra").getAsString();
+            String ra = jobject.get("ra").getAsString();
             String senha = jobject.get("senha").getAsString();
-            /*if (ra.length() == 7 && ra.chars().allMatch(Character::isDigit)) {*/
-            if (senha.matches("[a-zA-Z]{8,20}")) {
-                System.out.println("Dados de login corretos");
-               /* } else {
+            if (ra.length() == 7 && ra.chars().allMatch(Character::isDigit)) {
+                if (senha.matches("[a-zA-Z]{8,20}")) {
+                    System.out.println("Dados de login corretos");
+                } else {
                     temerro = true;
-                }*/
+                }
             } else {
                 temerro = true;
             }
@@ -63,10 +63,18 @@ public class Validador {
             if (jobject.has("nome")) {
                 if (jobject.has("senha")) {
                     String senha = jobject.get("senha").getAsString();
-                    if (senha.matches("[a-zA-Z]{8,20}"))
+                    String nome = jobject.get("nome").getAsString();
+                    String ra = jobject.get("ra").getAsString();
+                    if (senha.matches("[a-zA-Z]{8,20}") && nome.matches("[A-Z ]{1,50}") && ra.length() == 7 && ra.chars().allMatch(Character::isDigit))
                         temerro = false;
+                } else {
+                    System.out.println("Não possui senha");
                 }
+            } else {
+                System.out.println("Não possui nome");
             }
+        } else {
+            System.out.println("Não possui RA");
         }
         return temerro;
     }

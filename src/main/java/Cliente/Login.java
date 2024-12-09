@@ -2,20 +2,20 @@ package Cliente;
 
 public class Login {
     private final String operacao;
-    private int ra;
+    private String ra;
     private String senha;
 
-    public Login(int ra, String senha) {
+    public Login(String ra, String senha) {
         this.operacao = "login";
         this.ra = ra;
         this.setSenha(senha);
     }
 
-    public int getRA() {
+    public String getRA() {
         return ra;
     }
 
-    public void setRA(int ra) {
+    public void setRA(String ra) {
         this.ra = ra;
     }
 

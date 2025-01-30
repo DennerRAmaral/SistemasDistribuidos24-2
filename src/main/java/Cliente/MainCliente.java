@@ -59,7 +59,7 @@ public class MainCliente {
 
         while (continuar) {
             //System.out.println("Usuario padrao ou administrador?\n  1 - Padrao\n  2 - Administrador  \n  0 - sair");
-            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - logout\n  0 - fechar");
+            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - Listar usuarios\n  9 - logout\n  0 - fechar");
             userinput = scan.nextLine();
             switch (userinput) {
                 case "1":
@@ -69,6 +69,9 @@ public class MainCliente {
                     MainCliente.efetuarCadastro(scan, gson, out, in);
                     break;
                 case "3":
+                    MainCliente.listarUsusario(scan, gson, out, in);
+                    break;
+                case "9":
                     MainCliente.efetuarlogout(gson, out, in);
                     break;
                 case "0":
@@ -122,7 +125,7 @@ public class MainCliente {
             String retorno;
             System.out.println("Insira sua senha (Entre 8 e 50 letras):");
             String senha = scan.nextLine();
-            Usuario usuario = new Usuario(ra, nome,senha);
+            Usuario usuario = new Usuario(ra, nome, senha);
             String json = gson.toJson(usuario);
             Validador valid = new Validador(json);
             if (!(valid.usuarioinvalido())) {
@@ -140,7 +143,7 @@ public class MainCliente {
                     System.out.println(retornojson.get("mensagem").getAsString());
 
                 }
-            }else {
+            } else {
                 System.out.println("Dados de usuario invalidos\n");
             }
         } else {
@@ -171,5 +174,25 @@ public class MainCliente {
         }
     }
 
+    protected static void listarUsusario(Scanner scan,Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            Listarusuarios listar = new Listarusuarios(token);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 200) {
+                System.out.println("Logout efetuado");
+                token = "";
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
 
+            }
+        }
+    }
 }

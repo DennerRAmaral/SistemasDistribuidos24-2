@@ -23,7 +23,9 @@ public class MainServer extends Thread {
     protected Socket clientSocket;
     public static ArrayList<Usuario> usuarios;
     public static ArrayList<String> logados;
-    public static String fileName = "arquivos.txt";
+    public static String fileusers = "usuarios.txt";
+    public static String filecategorias = "categorias.txt";
+    public static String admin = "1234567";
 
     public static void main(String[] args) throws IOException {
         usuarios = new ArrayList<>();
@@ -31,9 +33,18 @@ public class MainServer extends Thread {
         Gson geson = new Gson();
 
         try {
-            List<String> lines = Files.readAllLines(Paths.get(fileName));
+            List<String> lines = Files.readAllLines(Paths.get(fileusers));
             for (String line : lines) {
                 criarusuario(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }try {
+            List<String> lines = Files.readAllLines(Paths.get(filecategorias));
+            for (String line : lines) {
+                if (!line.isBlank()){
+                    criarusuario(line);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -111,6 +122,7 @@ public class MainServer extends Thread {
         return switch (operacao) {
             case "login" -> login(json);
             case "cadastrarUsuario" -> cadastrarUsuario(json);
+
             case "logout" -> logout(json);
             default ->
                     ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
@@ -188,6 +200,20 @@ public class MainServer extends Thread {
             String nome = usuariodata.get("nome").getAsString();
             String senha = usuariodata.get("senha").getAsString();
             usuarios.add(new Usuario(ra, nome, senha));
+        }
+    }
+
+    public static String listarusuarios(String json){
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        if (logados.contains(token)){
+            if (token.equals(admin)){
+
+            }else {
+                return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
+            }
+        }else {
+            return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
     }
 }

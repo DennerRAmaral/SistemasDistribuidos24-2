@@ -4,20 +4,11 @@ import Base.Usuario;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
+import java.io.*;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class MainServer extends Thread {
     protected Socket clientSocket;
@@ -122,7 +113,7 @@ public class MainServer extends Thread {
         return switch (operacao) {
             case "login" -> login(json);
             case "cadastrarUsuario" -> cadastrarUsuario(json);
-
+            case "listarusuario" -> listarusuarios(json,usuarios);
             case "logout" -> logout(json);
             default ->
                     ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
@@ -203,12 +194,15 @@ public class MainServer extends Thread {
         }
     }
 
-    public static String listarusuarios(String json){
+    public static String listarusuarios(String json, ArrayList<Usuario> usuarios){
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
         if (logados.contains(token)){
             if (token.equals(admin)){
-
+                Gson gson = new Gson();
+                RetornaListarususarios lista = new RetornaListarususarios(usuarios);
+                String retorno = gson.toJson(lista);
+                return retorno;
             }else {
                 return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
             }

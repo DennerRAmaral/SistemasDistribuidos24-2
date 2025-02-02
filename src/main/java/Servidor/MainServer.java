@@ -4,6 +4,7 @@ import Base.Usuario;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
@@ -21,7 +22,6 @@ public class MainServer extends Thread {
     public static void main(String[] args) throws IOException {
         usuarios = new ArrayList<>();
         logados = new ArrayList<>();
-        Gson geson = new Gson();
 
         try {
             List<String> lines = Files.readAllLines(Paths.get(fileusers));
@@ -30,10 +30,11 @@ public class MainServer extends Thread {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }try {
+        }
+        try {
             List<String> lines = Files.readAllLines(Paths.get(filecategorias));
             for (String line : lines) {
-                if (!line.isBlank()){
+                if (!line.isBlank()) {
                     criarusuario(line);
                 }
             }
@@ -107,16 +108,20 @@ public class MainServer extends Thread {
         }
     }
 
-    public static String action(String json) {
-        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject(); // PARSER
+    public static String action(String json) throws IOException {
+        JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
+        if (!jsonObject.has("operacao")){
+             return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        }
         String operacao = jsonObject.get("operacao").getAsString();
         return switch (operacao) {
             case "login" -> login(json);
             case "cadastrarUsuario" -> cadastrarUsuario(json);
-            case "listarusuario" -> listarusuarios(json,usuarios);
+            case "listarUsuarios" -> listarusuarios(json, usuarios);
+            case "localizarUsuario" -> localizarusuario(json, usuarios);
+            case "editarUsuario" -> editarUsuario(json);
             case "logout" -> logout(json);
-            default ->
-                    ("{\"status\": 401,\"operacao\": \"operacao de entrada do cliente\",\"mensagem\":  \"Operacao nao encontrada\"}");
+            default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
 
 
@@ -155,7 +160,7 @@ public class MainServer extends Thread {
         } else {
             String ra = usuariodata.get("ra").getAsString();
             for (Usuario user : usuarios) {
-                if (ra.equals(user.getRA()) ) {
+                if (ra.equals(user.getRA())) {
                     return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuario\",\"mensagem\":  \"Não foi cadastrar pois o usuario informado ja existe\"}";
                 }
             }
@@ -168,7 +173,7 @@ public class MainServer extends Thread {
         Validador valido = new Validador(json);
         JsonObject logoutdata = JsonParser.parseString(json).getAsJsonObject();
         if (valido.logoutincorreto()) {
-            return "{\"status\": 401 ,\"operacao\": \"logout\",\"mensagem\":  \"Não foi possível ler o json recebido.\"}";
+            return "{\"status\": 401 ,\"operacao\": \"logout\",\"mensagem\":  \"Os campos recebidos não são válidos.\"}";
         } else {
             String token = logoutdata.get("token").getAsString();
             if (logados.contains(token)) {
@@ -194,20 +199,100 @@ public class MainServer extends Thread {
         }
     }
 
-    public static String listarusuarios(String json, ArrayList<Usuario> usuarios){
+    public static String listarusuarios(String json, ArrayList<Usuario> usuarios) {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
-        if (logados.contains(token)){
-            if (token.equals(admin)){
+        if (logados.contains(token)) {
+            if (token.equals(admin)) {
                 Gson gson = new Gson();
                 RetornaListarususarios lista = new RetornaListarususarios(usuarios);
-                String retorno = gson.toJson(lista);
-                return retorno;
-            }else {
+                return gson.toJson(lista);
+            } else {
                 return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
             }
-        }else {
+        } else {
             return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
     }
+
+    public static String localizarusuario(String json, ArrayList<Usuario> usuarios) {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        RetornaLocalizarUsuario retorno;
+        Gson gson = new Gson();
+        if (logados.contains(token)) {
+            if (token.equals(admin)) {
+                if (usuariodata.has("ra")) {
+                    String ra = usuariodata.get("ra").getAsString();
+                    for (Usuario usuario : usuarios) {
+                        if (usuario.getRA().equals(ra)) {
+                            retorno = new RetornaLocalizarUsuario(usuario);
+                            return gson.toJson(retorno);
+                        }
+                    }
+                    return "{\"status\": 401 ,\"operacao\": \"localizarusuario\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+
+                } else {
+                    return "{\"status\": 401 ,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+                }
+            } else {
+                if (token.equals(usuariodata.get("ra").getAsString()) && usuariodata.has("ra")) {
+                    String ra = usuariodata.get("ra").getAsString();
+                    for (Usuario usuario : usuarios) {
+                        if (usuario.getRA().equals(ra)) {
+                            retorno = new RetornaLocalizarUsuario(usuario);
+                            return gson.toJson(retorno);
+                        }
+                    }
+                } else {
+                    return "{\"status\": 401,\"operacao\": \"localirUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                }
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"localizarUsuario\",\"mensagem\":  \"Credenciais incorretas.\"}";
+        }
+        return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+    }
+
+    public static String editarUsuario(String json) throws IOException {
+        Validador valido;
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        Gson gson = new Gson();
+        Usuario userupdate;
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token)||token.equals(usuariodata.get("ra").getAsString())) {
+                JsonObject lista = usuariodata.getAsJsonObject("usuario");
+                String userrecebido = lista.toString();
+                valido = new Validador(userrecebido);
+                if (valido.usuarioinvalido()) {
+                    return "{ \"status\": 401,\"operacao\": \"editarUsuario\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
+                } else {
+                    String ra = lista.get("ra").getAsString();
+                    String nome = lista.get("nome").getAsString();
+                    String senha = lista.get("senha").getAsString();
+                    for (int i = 0;i< usuarios.size();i++) {
+                        if (usuarios.get(i).getRA().equals(ra)) {
+                            String olduser = gson.toJson(usuarios.get(i));
+                            userupdate = new Usuario(ra,nome,senha);
+                            String newuser = gson.toJson(userupdate);
+                            usuarios.set(i,userupdate);
+                            ModificadordeArquivos.modifyFile(fileusers,olduser,newuser);
+                            return "{ \"status\": 201,\"operacao\": \"editarUsuario\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                        }
+                    }
+                    return "{\"status\": 401 ,\"operacao\": \"editarUsuarios\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+                }
+            }else {
+                return "{\"status\": 401,\"operacao\": \"editarUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            }
+        }
+        return "{ \"status\": 401,\"operacao\": \"editarUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+    }
+
 }
+
+
+

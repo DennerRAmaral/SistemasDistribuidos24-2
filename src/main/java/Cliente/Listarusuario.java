@@ -1,10 +1,10 @@
 package Cliente;
 
-public class Listarusuarios {
+public class Listarusuario {
     private final String operacao;
     private String token;
 
-    public Listarusuarios (String token){
+    public Listarusuario(String token){
         this.operacao = "listarUsuarios";
         this.setToken(token);
     }

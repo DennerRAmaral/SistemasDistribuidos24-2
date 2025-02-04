@@ -1,38 +1,26 @@
 package Servidor;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import Base.Usuario;
+import com.google.gson.Gson;
+
+import java.io.*;
+import java.util.ArrayList;
 
 public class ModificadordeArquivos {
-    static void modifyFile(String filePath, String oldString, String newString) throws IOException {
+    static void modifyFile(String filePath, ArrayList<Usuario> data) throws IOException {
         File fileToBeModified = new File(filePath);
-        String oldContent = "";
-        BufferedReader reader = null;
-        reader = new BufferedReader(new FileReader(fileToBeModified));
+        Gson gson = new Gson();
         FileWriter writer = null;
-        writer = new FileWriter(fileToBeModified);
+        writer = new FileWriter(String.valueOf(fileToBeModified));
         try {
+            for (int i = 0; i < data.size(); i++) {
 
-            //Reading all the lines of input text file into oldContent
-            String line = reader.readLine();
-            while (line != null) {
-                oldContent = oldContent + line + System.lineSeparator();
-
-                line = reader.readLine();
+                writer.write(gson.toJson(data.get(i)) + "\n");
             }
-            //Replacing oldString with newString in the oldContent
-            String newContent = oldContent.replaceAll(oldString, newString);
-            //Rewriting the input text file with newContent
-
-            writer.write(newContent);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
-                reader.close();
                 writer.close();
             } catch (IOException e) {
                 e.printStackTrace();

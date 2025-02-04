@@ -279,7 +279,7 @@ public class MainServer extends Thread {
                             userupdate = new Usuario(ra,nome,senha);
                             String newuser = gson.toJson(userupdate);
                             usuarios.set(i,userupdate);
-                            ModificadordeArquivos.modifyFile(fileusers,olduser,newuser);
+                            ModificadordeArquivos.modifyFile(fileusers,usuarios);
                             return "{ \"status\": 201,\"operacao\": \"editarUsuario\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                         }
                     }

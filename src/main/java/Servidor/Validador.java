@@ -79,5 +79,22 @@ public class Validador {
         return temerro;
     }
 
+    public boolean categoriainvalida() {
+        boolean temerro = true;
+        if (jobject.has("id")) {
+            if (jobject.has("nome")) {
+                String nome = jobject.get("nome").getAsString();
+                int id = jobject.get("id").getAsInt();
+                if (nome.matches("[A-Z ]{1,50}") && (id >= 0)){
+                    temerro = false;
+                }
+            } else {
+                System.out.println("Não possui nome");
+            }
+        } else {
+            System.out.println("Não possui id");
+        }
+        return temerro;
+    }
 
 }

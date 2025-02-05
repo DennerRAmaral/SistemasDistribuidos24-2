@@ -1,5 +1,6 @@
 package Servidor;
 
+import Base.Categoria;
 import Base.Usuario;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -14,6 +15,7 @@ import java.util.*;
 public class MainServer extends Thread {
     protected Socket clientSocket;
     public static ArrayList<Usuario> usuarios;
+    public static ArrayList<Categoria> categorias;
     public static ArrayList<String> logados;
     public static String fileusers = "usuarios.txt";
     public static String filecategorias = "categorias.txt";
@@ -21,6 +23,7 @@ public class MainServer extends Thread {
 
     public static void main(String[] args) throws IOException {
         usuarios = new ArrayList<>();
+        categorias = new ArrayList<>();
         logados = new ArrayList<>();
 
         try {
@@ -35,7 +38,7 @@ public class MainServer extends Thread {
             List<String> lines = Files.readAllLines(Paths.get(filecategorias));
             for (String line : lines) {
                 if (!line.isBlank()) {
-                    criarusuario(line);
+                    criarcategoria(line);
                 }
             }
         } catch (IOException e) {
@@ -110,8 +113,8 @@ public class MainServer extends Thread {
 
     public static String action(String json) throws IOException {
         JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-        if (!jsonObject.has("operacao")){
-             return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (!jsonObject.has("operacao")) {
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         }
         String operacao = jsonObject.get("operacao").getAsString();
         return switch (operacao) {
@@ -120,6 +123,8 @@ public class MainServer extends Thread {
             case "listarUsuarios" -> listarusuarios(json, usuarios);
             case "localizarUsuario" -> localizarusuario(json, usuarios);
             case "editarUsuario" -> editarUsuario(json);
+            case "excluirUsuario" -> excluirUsuario(json);
+            case "salvarCategoria" -> salvarCategoria(json);
             case "logout" -> logout(json);
             default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -199,6 +204,18 @@ public class MainServer extends Thread {
         }
     }
 
+    public static void criarcategoria(String json) {
+        Validador valido = new Validador(json);
+        JsonObject categoriaodata = JsonParser.parseString(json).getAsJsonObject();
+        if (valido.categoriainvalida()) {
+            System.out.println("Insercao de categoria invalida");
+        } else {
+            int id = categorias.size();
+            String nome = categoriaodata.get("nome").getAsString();
+            categorias.add(new Categoria(id, nome));
+        }
+    }
+
     public static String listarusuarios(String json, ArrayList<Usuario> usuarios) {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
@@ -263,7 +280,7 @@ public class MainServer extends Thread {
         if (token.isBlank())
             return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
-            if (admin.contains(token)||token.equals(usuariodata.get("ra").getAsString())) {
+            if (admin.contains(token) || token.equals(usuariodata.get("ra").getAsString())) {
                 JsonObject lista = usuariodata.getAsJsonObject("usuario");
                 String userrecebido = lista.toString();
                 valido = new Validador(userrecebido);
@@ -273,26 +290,93 @@ public class MainServer extends Thread {
                     String ra = lista.get("ra").getAsString();
                     String nome = lista.get("nome").getAsString();
                     String senha = lista.get("senha").getAsString();
-                    for (int i = 0;i< usuarios.size();i++) {
+                    for (int i = 0; i < usuarios.size(); i++) {
                         if (usuarios.get(i).getRA().equals(ra)) {
                             String olduser = gson.toJson(usuarios.get(i));
-                            userupdate = new Usuario(ra,nome,senha);
+                            userupdate = new Usuario(ra, nome, senha);
                             String newuser = gson.toJson(userupdate);
-                            usuarios.set(i,userupdate);
-                            ModificadordeArquivos.modifyFile(fileusers,usuarios);
+                            usuarios.set(i, userupdate);
+                            ModificadordeArquivos.modifyuserFile(fileusers, usuarios);
                             return "{ \"status\": 201,\"operacao\": \"editarUsuario\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                         }
                     }
                     return "{\"status\": 401 ,\"operacao\": \"editarUsuarios\",\"mensagem\":  \"Usuario nao encontrado.\"}";
                 }
-            }else {
+            } else {
                 return "{\"status\": 401,\"operacao\": \"editarUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
         }
         return "{ \"status\": 401,\"operacao\": \"editarUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
+    public static String excluirUsuario(String json) throws IOException {
+        Validador valido;
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        Gson gson = new Gson();
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token) || token.equals(usuariodata.get("ra").getAsString())) {
+                String ra = usuariodata.get("ra").getAsString();
+                for (int i = 0; i < usuarios.size(); i++) {
+                    if (usuarios.get(i).getRA().equals(ra)) {
+                        usuarios.remove(i);
+                        ModificadordeArquivos.modifyuserFile(fileusers, usuarios);
+                        return "{ \"status\": 201,\"operacao\": \"excluirUsuarios\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
+                    }
+                }
+                return "{\"status\": 401 ,\"operacao\": \"excluirUsuarios\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"excluirUsuarios\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+        }
+        return "{ \"status\": 401,\"operacao\": \"editarUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+    }
+
+    public static String salvarCategoria(String json) throws IOException {
+        Validador valido;
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        Gson gson = new Gson();
+        Categoria categoriaupdate;
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token)) {
+                JsonObject lista = usuariodata.getAsJsonObject("categoria");
+                String categoriarecebida = lista.toString();
+                valido = new Validador(categoriarecebida);
+                if (valido.categoriainvalida()) {
+                    return "{ \"status\": 401,\"operacao\": \"editarUsuario\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
+                } else {
+                    int id = lista.get("id").getAsInt();
+                    String nome = lista.get("nome").getAsString();
+                    if (id == 0) {
+                        criarcategoria(categoriarecebida);
+                        ModificadordeArquivos.modifycategFile(filecategorias, categorias);
+                        return "{ \"status\": 201,\"operacao\": \"salvarcategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                    } else {
+                        for (int i = 0; i < categorias.size(); i++) {
+                            if (categorias.get(i).getId() == id) {
+                                String olduser = gson.toJson(categorias.get(i));
+                                Categoria newcateg = new Categoria(id, nome);
+                                categorias.set(i, newcateg);
+                                ModificadordeArquivos.modifycategFile(fileusers, categorias);
+                                return "{ \"status\": 201,\"operacao\": \"salvarcategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                            }
+                        }
+                        return "{\"status\": 401 ,\"operacao\": \"salvarcategoria\",\"mensagem\":  \"Categoria nao encontrado.\"}";
+                    }
+                }
+            } else {
+                return "{\"status\": 401,\"operacao\": \"salvarcategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            }
+        }
+        return "{ \"status\": 401,\"operacao\": \"salvarcategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+    }
 }
+
 
 
 

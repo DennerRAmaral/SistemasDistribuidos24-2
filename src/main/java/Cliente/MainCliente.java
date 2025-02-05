@@ -1,5 +1,6 @@
 package Cliente;
 
+import Base.Categoria;
 import Base.Usuario;
 import Servidor.Validador;
 import com.google.gson.Gson;
@@ -60,7 +61,7 @@ public class MainCliente {
 
         while (continuar) {
             //System.out.println("Usuario padrao ou administrador?\n  1 - Padrao\n  2 - Administrador  \n  0 - sair");
-            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - Listar usuarios\n  4 - Buscar Usuario\n  5 - Editar Usuario\n  9 - logout\n  0 - fechar");
+            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - Listar usuarios\n  4 - Buscar Usuario\n  5 - Editar Usuario\n  6 - Excluir Usuario\n  9 - logout\n  0 - fechar");
             userinput = scan.nextLine();
             switch (userinput) {
                 case "1":
@@ -77,6 +78,12 @@ public class MainCliente {
                     break;
                 case "5":
                     MainCliente.atualizarcadastro(scan, gson, out, in);
+                    break;
+                case "6":
+                    MainCliente.excluirusuario(scan, gson, out, in);
+                    break;
+                case "7":
+                    MainCliente.salvarCategoria(scan, gson, out, in);
                     break;
                 case "9":
                     MainCliente.efetuarlogout(gson, out, in);
@@ -232,6 +239,29 @@ public class MainCliente {
         }
     }
 
+    protected static void excluirusuario(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("====\nInsira o RA desejado (apenas ADM):");
+            String ra = scan.nextLine();
+            ExcluirUsuario listar = new ExcluirUsuario(token, ra);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 201) {
+                System.out.println("Usuario Deletado!");
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
+
+            }
+        }
+    }
+
     protected static void atualizarcadastro(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
         if (token.isEmpty()) {
             System.out.println("Nao esta logado ainda");
@@ -248,7 +278,7 @@ public class MainCliente {
             Validador valid = new Validador(json);
             if (!(valid.usuarioinvalido())) {
                 EditarUsuario cad;
-                cad = new EditarUsuario(usuario,token);
+                cad = new EditarUsuario(usuario, token);
                 json = gson.toJson(cad);
                 System.out.println("Enviando ao server:" + json);
                 out.println(json);
@@ -263,6 +293,39 @@ public class MainCliente {
             } else {
                 System.out.println("Dados de usuario invalidos");
             }
+        }
+    }
+
+    protected static void salvarCategoria(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (!token.isEmpty()) {
+            System.out.println("====\nInsira o id da cataegoria ou insira 0 para criar nova:");
+            int id = scan.nextInt();
+            scan.skip("\n");
+            System.out.println("Insira o nome da categoria (Apenas letrasmaiusculas maiusculas):");
+            String nome = scan.nextLine();
+            String retorno;
+            Categoria categ = new Categoria(id, nome);
+            String json = gson.toJson(categ);
+            Validador valid = new Validador(json);
+            if (!(valid.categoriainvalida())) {
+                SalvarCategoria cad = new SalvarCategoria(token, categ);
+                json = gson.toJson(cad);
+                System.out.println("Enviando ao server:" + json);
+                out.println(json);
+                retorno = in.readLine();
+                System.out.println("Recebido do Server: " + retorno);
+                JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+                if (retornojson.get("status").getAsInt() == 200) {
+                    System.out.println("Salvamento efetuado");
+                } else {
+                    System.out.println(retornojson.get("mensagem").getAsString());
+
+                }
+            } else {
+                System.out.println("Dados de categoria invalidos\n");
+            }
+        } else {
+            System.out.println("Nao esta logado");
         }
     }
 

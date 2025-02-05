@@ -6,11 +6,11 @@ import java.util.ArrayList;
 
 public class RetornaListarususarios {
     private int status = 201;
-    private String opercao;
-    private ArrayList<Usuario> usuario;
+    private String operacao;
+    private ArrayList<Usuario> usuarios;
 
     public RetornaListarususarios(ArrayList<Usuario> usuario) {
-        this.opercao = "listarUsuarios";
-        this.usuario = usuario;
+        this.operacao = "listarUsuarios";
+        this.usuarios = usuario;
     }
 }

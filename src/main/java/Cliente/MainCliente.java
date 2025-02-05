@@ -85,6 +85,9 @@ public class MainCliente {
                 case "7":
                     MainCliente.salvarCategoria(scan, gson, out, in);
                     break;
+                case "8":
+                    MainCliente.listarCategorias(gson, out, in);
+                    break;
                 case "9":
                     MainCliente.efetuarlogout(gson, out, in);
                     break;
@@ -326,6 +329,32 @@ public class MainCliente {
             }
         } else {
             System.out.println("Nao esta logado");
+        }
+    }
+
+    protected static void listarCategorias(Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            ListarCategorias listar = new ListarCategorias(token);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 201) {
+                JsonArray lista = retornojson.getAsJsonArray("categorias");
+                Categoria[] userArray = gson.fromJson(lista, Categoria[].class);
+                System.out.println("Lista de Categorias:");
+                for (Categoria categ : userArray) {
+                    System.out.println(categ);
+                }
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
+
+            }
         }
     }
 

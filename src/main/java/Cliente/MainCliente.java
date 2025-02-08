@@ -60,8 +60,10 @@ public class MainCliente {
 
 
         while (continuar) {
-            //System.out.println("Usuario padrao ou administrador?\n  1 - Padrao\n  2 - Administrador  \n  0 - sair");
-            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - Listar usuarios\n  4 - Buscar Usuario\n  5 - Editar Usuario\n  6 - Excluir Usuario\n  9 - logout\n  0 - fechar");
+
+            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - Listar usuarios\n" +
+                    "  4 - Buscar Usuario\n  5 - Editar Usuario\n  6 - Excluir Usuario\n  7- Salvar Categoria\n" +
+                    "  8 - Listar Categorias\n  9 - Localizar Categoria\n  10 - Excluir Categoria\n  12 - logout\n  0 - fechar");
             userinput = scan.nextLine();
             switch (userinput) {
                 case "1":
@@ -89,6 +91,12 @@ public class MainCliente {
                     MainCliente.listarCategorias(gson, out, in);
                     break;
                 case "9":
+                    MainCliente.localizarcategoria(scan, gson, out, in);
+                    break;
+                case "10":
+                    MainCliente.excluircategoria(scan, gson, out, in);
+                    break;
+                case "12":
                     MainCliente.efetuarlogout(gson, out, in);
                     break;
                 case "0":
@@ -351,6 +359,57 @@ public class MainCliente {
                 for (Categoria categ : userArray) {
                     System.out.println(categ);
                 }
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
+
+            }
+        }
+    }
+
+    protected static void localizarcategoria(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("====\nInsira o ID desejado:");
+            int id = scan.nextInt();
+            scan.skip("\n");
+            LocalizarCategoria listar = new LocalizarCategoria(token, id);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 201) {
+                JsonObject lista = retornojson.getAsJsonObject("categoria");
+                Categoria userfound;
+                userfound = gson.fromJson(lista, Categoria.class);
+                System.out.println("Categoria encontrada: \n" + userfound);
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
+
+            }
+        }
+    }
+
+    protected static void excluircategoria(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("====\nInsira o id desejado (apenas ADM):");
+            int id = scan.nextInt();
+            scan.skip("\n");
+            ExcluirCategoria listar = new ExcluirCategoria(token, id);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 201) {
+                System.out.println("Categoria Deletada!");
             } else {
                 System.out.println(retornojson.get("mensagem").getAsString());
 

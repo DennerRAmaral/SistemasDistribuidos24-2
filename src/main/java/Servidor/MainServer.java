@@ -2,7 +2,6 @@ package Servidor;
 
 import Base.Categoria;
 import Base.Usuario;
-import Cliente.MainCliente;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -53,7 +52,7 @@ public class MainServer extends Thread {
             serverSocket = new ServerSocket(serverport);
             System.out.println("Soquete de conexao ok");
             try {
-                while (true) {
+                do {
                     serverSocket.setSoTimeout(1000000);
                     System.out.println("Aguardando...");
                     try {
@@ -61,7 +60,8 @@ public class MainServer extends Thread {
                     } catch (SocketTimeoutException ste) {
                         System.out.println("Timeout");
                     }
-                }
+                } while (!Thread.currentThread().isInterrupted());
+                Objects.requireNonNull(serverSocket).close();
             } catch (IOException e) {
                 System.err.println("Accept failed.");
                 System.exit(1);
@@ -72,7 +72,6 @@ public class MainServer extends Thread {
         } finally {
             try {
                 System.out.println("Fechando soquete");
-                assert serverSocket != null;
                 Objects.requireNonNull(serverSocket).close();
             } catch (IOException e) {
                 System.err.println("Could not close port: 10008.");
@@ -127,6 +126,8 @@ public class MainServer extends Thread {
             case "excluirUsuario" -> excluirUsuario(json);
             case "salvarCategoria" -> salvarCategoria(json);
             case "listarCategorias" -> listarcategorias(json, categorias);
+            case "localizarCategoria" -> localizarcategoria(json);
+            case "excluirCategoria"  -> excluirCategoria(json);
             case "logout" -> logout(json);
             default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -352,7 +353,7 @@ public class MainServer extends Thread {
         } else {
             return "{\"status\": 401,\"operacao\": \"excluirUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
         }
-        return "{ \"status\": 401,\"operacao\": \"editarUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\": 401,\"operacao\": \"excluirUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String salvarCategoria(String json) throws IOException {
@@ -411,6 +412,58 @@ public class MainServer extends Thread {
         } else {
             return "{\"status\": 401,\"operacao\": \"listarCategorias\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
+    }
+
+    public static String localizarcategoria(String json) {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        RetornaLocalizarCategoria retorno;
+        Gson gson = new Gson();
+        if (logados.contains(token)) {
+            if (token.equals(admin)) {
+                if (usuariodata.has("id")) {
+                    int id = usuariodata.get("id").getAsInt();
+                    for (Categoria categoria : categorias) {
+                        if (categoria.getId() == id) {
+                            retorno = new RetornaLocalizarCategoria(categoria);
+                            return gson.toJson(retorno);
+                        }
+                    }
+                    return "{\"status\": 401 ,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
+
+                } else {
+                    return "{\"status\": 401 ,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+                }
+            } else {
+                return "{\"status\": 401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            }
+
+        } else {
+            return "{\"status\": 401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Credenciais incorretas.\"}";
+        }
+    }
+
+    public static String excluirCategoria(String json) throws IOException {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token)) {
+                int id = usuariodata.get("id").getAsInt();
+                for (int i = 0; i < categorias.size(); i++) {
+                    if (categorias.get(i).getId()== id) {
+                        categorias.remove(i);
+                        ModificadordeArquivos.modifycategFile(filecategorias, categorias);
+                        return "{ \"status\": 201,\"operacao\": \"excluirCategoria\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
+                    }
+                }
+                return "{\"status\": 401 ,\"operacao\": \"excluirCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"excluirCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+        }
+        return "{ \"status\": 401,\"operacao\": \"excluirCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 }
 

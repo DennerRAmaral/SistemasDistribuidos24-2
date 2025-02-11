@@ -377,7 +377,7 @@ public class MainServer extends Thread {
                     if (id == 0) {
                         criarcategoria(categoriarecebida);
                         ModificadordeArquivos.modifycategFile(filecategorias, categorias);
-                        return "{ \"status\": 201,\"operacao\": \"salvarcategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                        return "{ \"status\": 201,\"operacao\": \"salvarCategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                     } else {
                         for (int i = 0; i < categorias.size(); i++) {
                             if (categorias.get(i).getId() == id) {
@@ -385,17 +385,17 @@ public class MainServer extends Thread {
                                 Categoria newcateg = new Categoria(id, nome);
                                 categorias.set(i, newcateg);
                                 ModificadordeArquivos.modifycategFile(filecategorias, categorias);
-                                return "{ \"status\": 201,\"operacao\": \"salvarcategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                                return "{ \"status\": 201,\"operacao\": \"salvarCategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                             }
                         }
-                        return "{\"status\": 401 ,\"operacao\": \"salvarcategoria\",\"mensagem\":  \"Categoria nao encontrado.\"}";
+                        return "{\"status\": 401 ,\"operacao\": \"salvarCategoria\",\"mensagem\":  \"Categoria nao encontrado.\"}";
                     }
                 }
             } else {
-                return "{\"status\": 401,\"operacao\": \"salvarcategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                return "{\"status\": 401,\"operacao\": \"salvarCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
         }
-        return "{ \"status\": 401,\"operacao\": \"salvarcategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\": 401,\"operacao\": \"salvarCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String listarcategorias(String json, ArrayList<Categoria> categorias) {

@@ -10,7 +10,7 @@ public class RetornaListarCategorias {
     private ArrayList<Categoria> categorias;
 
     public RetornaListarCategorias(ArrayList<Categoria> categorias) {
-        this.operacao = "listarcategorias";
+        this.operacao = "listarCategorias";
         this.categorias = categorias;
     }
 }

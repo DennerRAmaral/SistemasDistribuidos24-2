@@ -85,11 +85,39 @@ public class Validador {
             if (jobject.has("nome")) {
                 String nome = jobject.get("nome").getAsString();
                 int id = jobject.get("id").getAsInt();
-                if (nome.matches("[A-Z ]{1,50}") && (id >= 0)){
+                if (nome.matches("[A-Z ]{1,50}") && (id >= 0)) {
                     temerro = false;
                 }
             } else {
                 System.out.println("Não possui nome");
+            }
+        } else {
+            System.out.println("Não possui id");
+        }
+        return temerro;
+    }
+
+    public boolean avisoinvalido() {
+        boolean temerro = true;
+        if (jobject.has("id")) {
+            if (jobject.has("titulo")) {
+                if (jobject.has("categoria")) {
+                    if (jobject.has("descricao")) {
+                        String titulo = jobject.get("titulo").getAsString();
+                        int categoria = jobject.get("categoria").getAsInt();
+                        int id = jobject.get("id").getAsInt();
+                        String descricao = jobject.get("descricao").getAsString();
+                        if (titulo.matches("[A-Z ]{1,100}") && descricao.matches("[a-zA-Z ]{1,500}") && (id >= 0) && (categoria >= 0)) {
+                            temerro = false;
+                        }
+                    } else {
+                        System.out.println("nao possui descricao");
+                    }
+                } else {
+                    System.out.println("nao possui categoria");
+                }
+            } else {
+                System.out.println("Não possui titulo");
             }
         } else {
             System.out.println("Não possui id");

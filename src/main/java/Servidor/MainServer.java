@@ -1,5 +1,6 @@
 package Servidor;
 
+import Base.Aviso;
 import Base.Categoria;
 import Base.Usuario;
 import com.google.gson.Gson;
@@ -16,14 +17,17 @@ public class MainServer extends Thread {
     protected Socket clientSocket;
     public static ArrayList<Usuario> usuarios;
     public static ArrayList<Categoria> categorias;
+    public static ArrayList<Aviso> avisos;
     public static ArrayList<String> logados;
     public static String fileusers = "usuarios.txt";
     public static String filecategorias = "categorias.txt";
+    public static String fileavisos = "avisos.txt";
     public static String admin = "1234567";
 
     public static void main(String[] args) throws IOException {
         usuarios = new ArrayList<>();
         categorias = new ArrayList<>();
+        avisos = new ArrayList<>();
         logados = new ArrayList<>();
 
         try {
@@ -44,8 +48,16 @@ public class MainServer extends Thread {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(fileavisos));
+            for (String line : lines) {
+                criaraviso(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         ServerSocket serverSocket = null;
-        int serverport = 25000;
+        int serverport = 24000;
         InetAddress localHost = InetAddress.getLocalHost();
         System.out.println("Ip do servidor: " + localHost + "\nPorta de conexao: " + serverport);
         try {
@@ -127,7 +139,7 @@ public class MainServer extends Thread {
             case "salvarCategoria" -> salvarCategoria(json);
             case "listarCategorias" -> listarcategorias(json, categorias);
             case "localizarCategoria" -> localizarcategoria(json);
-            case "excluirCategoria"  -> excluirCategoria(json);
+            case "excluirCategoria" -> excluirCategoria(json);
             case "logout" -> logout(json);
             default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -160,7 +172,7 @@ public class MainServer extends Thread {
         }
     }
 
-    public static String cadastrarUsuario(String json) throws IOException {
+    public static String cadastrarUsuario(String json) {
         Validador valido = new Validador(json);
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         if (valido.usuarioinvalido()) {
@@ -238,6 +250,34 @@ public class MainServer extends Thread {
         }
     }
 
+    public static void criaraviso(String json) throws IOException {
+        Validador valido = new Validador(json);
+        JsonObject avisodata = JsonParser.parseString(json).getAsJsonObject();
+        if (valido.avisoinvalido()) {
+            System.out.println("Insercao de aviso invalida");
+        } else {
+            int id = 0;
+            for (int i = 0; i < avisos.size(); i++) {
+                if (i != avisos.get(i).getId()) {
+                    id = i;
+                    break;
+                }
+            }
+            if (id == 0) {
+                id = avisos.size();
+            }
+            int categoria = avisodata.get("categoria").getAsInt();
+            String titulo = avisodata.get("titulo").getAsString();
+            String descricao = avisodata.get("descricao").getAsString();
+            avisos.add(id, new Aviso(id, categoria, titulo, descricao));
+            try {
+                ModificadordeArquivos.modifyavisoFile(fileavisos, avisos);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     public static String listarusuarios(String json, ArrayList<Usuario> usuarios) {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
@@ -297,7 +337,6 @@ public class MainServer extends Thread {
         Validador valido;
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
-        Gson gson = new Gson();
         Usuario userupdate;
         JsonObject lista = usuariodata.getAsJsonObject("usuario");
         if (token.isBlank())
@@ -314,9 +353,7 @@ public class MainServer extends Thread {
                     String senha = lista.get("senha").getAsString();
                     for (int i = 0; i < usuarios.size(); i++) {
                         if (usuarios.get(i).getRA().equals(ra)) {
-                            String olduser = gson.toJson(usuarios.get(i));
                             userupdate = new Usuario(ra, nome, senha);
-                            String newuser = gson.toJson(userupdate);
                             usuarios.set(i, userupdate);
                             ModificadordeArquivos.modifyuserFile(fileusers, usuarios);
                             return "{ \"status\": 201,\"operacao\": \"editarUsuario\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
@@ -332,10 +369,8 @@ public class MainServer extends Thread {
     }
 
     public static String excluirUsuario(String json) throws IOException {
-        Validador valido;
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
-        Gson gson = new Gson();
         if (token.isBlank())
             return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
@@ -360,8 +395,6 @@ public class MainServer extends Thread {
         Validador valido;
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
-        Gson gson = new Gson();
-        Categoria categoriaupdate;
         if (token.isBlank())
             return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
@@ -381,7 +414,6 @@ public class MainServer extends Thread {
                     } else {
                         for (int i = 0; i < categorias.size(); i++) {
                             if (categorias.get(i).getId() == id) {
-                                String olduser = gson.toJson(categorias.get(i));
                                 Categoria newcateg = new Categoria(id, nome);
                                 categorias.set(i, newcateg);
                                 ModificadordeArquivos.modifycategFile(filecategorias, categorias);
@@ -452,7 +484,7 @@ public class MainServer extends Thread {
             if (admin.contains(token)) {
                 int id = usuariodata.get("id").getAsInt();
                 for (int i = 0; i < categorias.size(); i++) {
-                    if (categorias.get(i).getId()== id) {
+                    if (categorias.get(i).getId() == id) {
                         categorias.remove(i);
                         ModificadordeArquivos.modifycategFile(filecategorias, categorias);
                         return "{ \"status\": 201,\"operacao\": \"excluirCategoria\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";

@@ -1,7 +1,6 @@
 package Cliente;
 
-import Base.Categoria;
-import Base.Usuario;
+import Base.*;
 import Servidor.Validador;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

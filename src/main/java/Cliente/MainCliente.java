@@ -60,9 +60,26 @@ public class MainCliente {
 
         while (continuar) {
 
-            System.out.println("====\nQUAL ACAO DESEJA?\n====\n  1 - Login\n  2 - Cadastro\n  3 - Listar usuarios\n" +
-                    "  4 - Buscar Usuario\n  5 - Editar Usuario\n  6 - Excluir Usuario\n  7- Salvar Categoria\n" +
-                    "  8 - Listar Categorias\n  9 - Localizar Categoria\n  10 - Excluir Categoria\n  12 - logout\n  0 - fechar");
+            System.out.println("""
+                    ====
+                    QUAL ACAO DESEJA?
+                    ====
+                      1 - Login
+                      2 - Cadastro
+                      3 - Listar usuarios
+                      4 - Buscar Usuario
+                      5 - Editar Usuario
+                      6 - Excluir Usuario
+                      7- Salvar Categoria
+                      8 - Listar Categorias
+                      9 - Localizar Categoria
+                      10 - Excluir Categoria
+                      11 - Salvar Aviso
+                      12 - Listar Avisos
+                      13 - Localizar Aviso
+                      14 - Excluir Aviso
+                      20 - logout
+                      0 - fechar""");
             userinput = scan.nextLine();
             switch (userinput) {
                 case "1":
@@ -95,7 +112,19 @@ public class MainCliente {
                 case "10":
                     MainCliente.excluircategoria(scan, gson, out, in);
                     break;
+                case "11":
+                    MainCliente.salvarAvisos(scan, gson, out, in);
+                    break;
                 case "12":
+                    MainCliente.listarAvisos(scan, gson, out, in);
+                    break;
+                case "13":
+                    MainCliente.localizaraviso(scan, gson, out, in);
+                    break;
+                case "14":
+                    MainCliente.excluiraviso(scan, gson, out, in);
+                    break;
+                case "20":
                     MainCliente.efetuarlogout(gson, out, in);
                     break;
                 case "0":
@@ -407,12 +436,119 @@ public class MainCliente {
             retorno = in.readLine();
             System.out.println("Recebido do Server: " + retorno);
             JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            System.out.println(retornojson.get("mensagem").getAsString());
+        }
+    }
+
+    protected static void salvarAvisos(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (!token.isEmpty()) {
+            System.out.println("====\nInsira o id do aviso ou insira 0 para criar nova:");
+            int id = scan.nextInt();
+            scan.skip("\n");
+            System.out.println("Insira o id da categoria:");
+            int categoria = scan.nextInt();
+            scan.skip("\n");
+            System.out.println("Insira o Titulo do aviso (Apenas letrasmaiusculas maiusculas):");
+            String titulo = scan.nextLine();
+            System.out.println("Insira a descricao (maximo 500 caracteres):");
+            String descricao = scan.nextLine();
+            String retorno;
+            Aviso aviso = new Aviso(id, categoria, titulo, descricao);
+            String json = gson.toJson(aviso);
+            Validador valid = new Validador(json);
+            if (!(valid.avisoinvalido())) {
+                SalvarAviso cad = new SalvarAviso(token, aviso);
+                json = gson.toJson(cad);
+                System.out.println("Enviando ao server:" + json);
+                out.println(json);
+                retorno = in.readLine();
+                System.out.println("Recebido do Server: " + retorno);
+                JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+                if (retornojson.get("status").getAsInt() == 200) {
+                    System.out.println("Salvamento efetuado");
+                } else {
+                    System.out.println(retornojson.get("mensagem").getAsString());
+
+                }
+            } else {
+                System.out.println("Dados de aviso invalidos\n");
+            }
+        } else {
+            System.out.println("Nao esta logado");
+        }
+    }
+
+    protected static void listarAvisos(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("Insira o id da categoria a se listar, ou 0 para lista todas:");
+            int categoria = scan.nextInt();
+            scan.skip("\n");
+            ListarAvisos listar = new ListarAvisos(token, categoria);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
             if (retornojson.get("status").getAsInt() == 201) {
-                System.out.println("Categoria Deletada!");
+                JsonArray lista = retornojson.getAsJsonArray("avisos");
+                Aviso[] userArray = gson.fromJson(lista, Aviso[].class);
+                System.out.println("Lista de Categorias:");
+                for (Aviso aviso : userArray) {
+                    System.out.println(aviso);
+                }
             } else {
                 System.out.println(retornojson.get("mensagem").getAsString());
 
             }
+        }
+    }
+
+    protected static void localizaraviso(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("====\nInsira o ID desejado:");
+            int id = scan.nextInt();
+            scan.skip("\n");
+            LocalizarAvisos listar = new LocalizarAvisos(token, id);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 201) {
+                JsonObject lista = retornojson.getAsJsonObject("aviso");
+                Aviso avisofound = gson.fromJson(lista, Aviso.class);
+                System.out.println("Aviso Encontrado: \n" + avisofound);
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
+
+            }
+        }
+    }
+
+    protected static void excluiraviso(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("====\nInsira o id desejado (apenas ADM):");
+            int id = scan.nextInt();
+            scan.skip("\n");
+            ExcluirAviso listar = new ExcluirAviso(token, id);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            System.out.println(retornojson.get("mensagem").getAsString());
         }
     }
 

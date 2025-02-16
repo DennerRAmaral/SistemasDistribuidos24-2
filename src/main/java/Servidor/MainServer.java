@@ -24,7 +24,7 @@ public class MainServer extends Thread {
     public static String fileavisos = "avisos.txt";
     public static String admin = "1234567";
 
-    public static void main(String[] args) throws IOException {
+    public static void main() throws IOException {
         usuarios = new ArrayList<>();
         categorias = new ArrayList<>();
         avisos = new ArrayList<>();
@@ -57,7 +57,7 @@ public class MainServer extends Thread {
             e.printStackTrace();
         }
         ServerSocket serverSocket = null;
-        int serverport = 24000;
+        int serverport = 25000;
         InetAddress localHost = InetAddress.getLocalHost();
         System.out.println("Ip do servidor: " + localHost + "\nPorta de conexao: " + serverport);
         try {
@@ -140,6 +140,10 @@ public class MainServer extends Thread {
             case "listarCategorias" -> listarcategorias(json, categorias);
             case "localizarCategoria" -> localizarcategoria(json);
             case "excluirCategoria" -> excluirCategoria(json);
+            case "salvarAviso" -> salvarAviso(json);
+            case "listarAvisos" -> listarAvisoa(json);
+            case "localizarAviso" -> localizaraviso(json);
+            case "excluirAviso" -> excluirAviso(json);
             case "logout" -> logout(json);
             default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -497,8 +501,133 @@ public class MainServer extends Thread {
         }
         return "{ \"status\": 401,\"operacao\": \"excluirCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
-}
 
+    public static String salvarAviso(String json) throws IOException {
+        Validador valido;
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token)) {
+                JsonObject lista = usuariodata.getAsJsonObject("aviso");
+                String avisorecebido = lista.toString();
+                valido = new Validador(avisorecebido);
+                if (valido.avisoinvalido()) {
+                    return "{ \"status\": 401,\"operacao\": \"salvarAviso\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
+                } else {
+                    int id = lista.get("id").getAsInt();
+                    int categoria = lista.get("categoria").getAsInt();
+                    String titulo = lista.get("titulo").getAsString();
+                    String descricao = lista.get("descricao").getAsString();
+                    boolean temcateg = false;
+                    for (Categoria value : categorias) {
+                        if (categoria == value.getId()) {
+                            temcateg = true;
+                            break;
+                        }
+                    }
+                    if (!temcateg) {
+                        return "{\"status\":401,\"operacao\":\"salvarAviso\",\"mensagem\":\"Categoria não encontrada.\"}";
+                    }
+                    if (id == 0) {
+                        criaraviso(avisorecebido);
+                        ModificadordeArquivos.modifyavisoFile(fileavisos, avisos);
+                        return "{ \"status\": 201,\"operacao\": \"salvarAviso\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                    } else {
+                        for (int i = 0; i < avisos.size(); i++) {
+                            if (avisos.get(i).getId() == id) {
+                                Aviso newaviso = new Aviso(id, categoria, titulo, descricao);
+                                avisos.set(i, newaviso);
+                                ModificadordeArquivos.modifyavisoFile(fileavisos, avisos);
+                                return "{ \"status\": 201,\"operacao\": \"salvarAviso\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                            }
+                        }
+                        return "{\"status\": 401 ,\"operacao\": \"salvarAviso\",\"mensagem\":  \"Aviso nao encontrado.\"}";
+                    }
+                }
+            } else {
+                return "{\"status\": 401,\"operacao\": \"salvarAviso\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            }
+        }
+        return "{ \"status\": 401,\"operacao\": \"salvarAviso\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+
+    }
+
+    public static String listarAvisoa(String json) {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        int categoria = usuariodata.get("categoria").getAsInt();
+        if (logados.contains(token)) {
+            Gson gson = new Gson();
+            if (categoria == 0) {
+                RetornaListarAvisos lista = new RetornaListarAvisos(avisos);
+                return gson.toJson(lista);
+            } else {
+                ArrayList<Aviso> avisosfiltrados = new ArrayList<>();
+                for (Aviso aviso : avisos) {
+                    if (aviso.getCategoria() == categoria) {
+                        avisosfiltrados.add(aviso);
+                    }
+                }
+                if (avisosfiltrados.isEmpty()) {
+                    return "{\"status\": 401 ,\"operacao\": \"listarAvisos\" ,\"mensagem\":  \"Categoria não encontrada;\"}";
+                } else {
+                    RetornaListarAvisos lista = new RetornaListarAvisos(avisosfiltrados);
+                    return gson.toJson(lista);
+                }
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"listarAvisos\",\"mensagem\":  \"Credenciais incorretas\"}";
+        }
+    }
+
+    public static String localizaraviso(String json) {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        RetornaLocalizarAviso retorno;
+        Gson gson = new Gson();
+        if (logados.contains(token)) {
+            if (usuariodata.has("id")) {
+                int id = usuariodata.get("id").getAsInt();
+                for (Aviso aviso: avisos) {
+                    if (aviso.getId() == id) {
+                        retorno = new RetornaLocalizarAviso(aviso);
+                        return gson.toJson(retorno);
+                    }
+                }
+                return "{\"status\": 401 ,\"operacao\": \"localizarAviso\",\"mensagem\":  \"Aviso nao encontrada.\"}";
+            } else {
+                return "{\"status\": 401 ,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"localizarAviso\",\"mensagem\":  \"Credenciais incorretas.\"}";
+        }
+    }
+
+    public static String excluirAviso(String json) throws IOException {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token)) {
+                int id = usuariodata.get("id").getAsInt();
+                for (int i = 0; avisos.size() > i; i++) {
+                    if (avisos.get(i).getId() == id) {
+                        avisos.remove(i);
+                        ModificadordeArquivos.modifyavisoFile(fileavisos, avisos);
+                        return "{ \"status\": 201,\"operacao\": \"excluirAviso\", \"mensagem\":  \"Exclusao realizada com sucesso\"}";
+                    }
+                }
+                return "{\"status\": 401 ,\"operacao\": \"excluirAviso\",\"mensagem\":  \"Aviso nao encontrada.\"}";
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"excluirAviso\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+        }
+        return "{ \"status\": 401,\"operacao\": \"excluirAviso\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+    }
+}
 
 
 

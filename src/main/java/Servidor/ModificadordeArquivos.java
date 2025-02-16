@@ -12,12 +12,12 @@ public class ModificadordeArquivos {
     static void modifyuserFile(String filePath, ArrayList<Usuario> data) throws IOException {
         File fileToBeModified = new File(filePath);
         Gson gson = new Gson();
-        FileWriter writer = null;
+        FileWriter writer;
         writer = new FileWriter(String.valueOf(fileToBeModified));
         try {
-            for (int i = 0; i < data.size(); i++) {
+            for (Usuario datum : data) {
 
-                writer.write(gson.toJson(data.get(i)) + "\n");
+                writer.write(gson.toJson(datum) + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -33,12 +33,12 @@ public class ModificadordeArquivos {
     static void modifycategFile(String filePath, ArrayList<Categoria> data) throws IOException {
         File fileToBeModified = new File(filePath);
         Gson gson = new Gson();
-        FileWriter writer = null;
+        FileWriter writer;
         writer = new FileWriter(String.valueOf(fileToBeModified));
         try {
-            for (int i = 0; i < data.size(); i++) {
+            for (Categoria datum : data) {
 
-                writer.write(gson.toJson(data.get(i)) + "\n");
+                writer.write(gson.toJson(datum) + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -53,11 +53,11 @@ public class ModificadordeArquivos {
     static void modifyavisoFile(String filePath, ArrayList<Aviso> data) throws IOException {
         File fileToBeModified = new File(filePath);
         Gson gson = new Gson();
-        FileWriter writer = null;
+        FileWriter writer;
         writer = new FileWriter(String.valueOf(fileToBeModified));
         try {
-            for (int i = 0; i < data.size(); i++) {
-                writer.write(gson.toJson(data.get(i)) + "\n");
+            for (Aviso datum : data) {
+                writer.write(gson.toJson(datum) + "\n");
             }
         } catch (IOException e) {
             e.printStackTrace();

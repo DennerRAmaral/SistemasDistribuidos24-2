@@ -70,7 +70,7 @@ public class MainCliente {
                       4 - Buscar Usuario
                       5 - Editar Usuario
                       6 - Excluir Usuario
-                      7- Salvar Categoria
+                      7 - Salvar Categoria
                       8 - Listar Categorias
                       9 - Localizar Categoria
                       10 - Excluir Categoria
@@ -78,6 +78,7 @@ public class MainCliente {
                       12 - Listar Avisos
                       13 - Localizar Aviso
                       14 - Excluir Aviso
+                      15 - Cadastrar Usuario em uma categoria
                       20 - logout
                       0 - fechar""");
             userinput = scan.nextLine();
@@ -123,6 +124,9 @@ public class MainCliente {
                     break;
                 case "14":
                     MainCliente.excluiraviso(scan, gson, out, in);
+                    break;
+                case "15":
+                    MainCliente.cadastrarusercateg(scan, gson, out, in);
                     break;
                 case "20":
                     MainCliente.efetuarlogout(gson, out, in);
@@ -549,6 +553,27 @@ public class MainCliente {
             System.out.println("Recebido do Server: " + retorno);
             JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
             System.out.println(retornojson.get("mensagem").getAsString());
+        }
+    }
+
+    protected static void cadastrarusercateg(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (!token.isEmpty()) {
+            System.out.println("====\nInsira o ra:");
+            String ra = scan.nextLine();
+            System.out.println("Insira o id da cataegoria:");
+            int categ = scan.nextInt();
+            scan.skip("\n");
+            String retorno;
+            CadastrarUsuarioCategoria cad = new CadastrarUsuarioCategoria(token, ra, categ);
+            String json = gson.toJson(cad);
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            System.out.println(retornojson.get("mensagem").getAsString());
+        } else {
+            System.out.println("Nao esta logado");
         }
     }
 

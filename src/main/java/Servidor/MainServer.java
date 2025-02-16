@@ -2,8 +2,10 @@ package Servidor;
 
 import Base.Aviso;
 import Base.Categoria;
+import Base.UserCateg;
 import Base.Usuario;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -19,15 +21,18 @@ public class MainServer extends Thread {
     public static ArrayList<Categoria> categorias;
     public static ArrayList<Aviso> avisos;
     public static ArrayList<String> logados;
+    public static ArrayList<UserCateg> userCategs;
     public static String fileusers = "usuarios.txt";
     public static String filecategorias = "categorias.txt";
     public static String fileavisos = "avisos.txt";
+    public static String fileusercategs = "usercateg.txt";
     public static String admin = "1234567";
 
     public static void main() throws IOException {
         usuarios = new ArrayList<>();
         categorias = new ArrayList<>();
         avisos = new ArrayList<>();
+        userCategs = new ArrayList<>();
         logados = new ArrayList<>();
 
         try {
@@ -52,6 +57,14 @@ public class MainServer extends Thread {
             List<String> lines = Files.readAllLines(Paths.get(fileavisos));
             for (String line : lines) {
                 criaraviso(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            List<String> lines = Files.readAllLines(Paths.get(fileusercategs));
+            for (String line : lines) {
+                criarusuercateg(line);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -141,9 +154,10 @@ public class MainServer extends Thread {
             case "localizarCategoria" -> localizarcategoria(json);
             case "excluirCategoria" -> excluirCategoria(json);
             case "salvarAviso" -> salvarAviso(json);
-            case "listarAvisos" -> listarAvisoa(json);
+            case "listarAvisos" -> listarAvisos(json);
             case "localizarAviso" -> localizaraviso(json);
             case "excluirAviso" -> excluirAviso(json);
+            case "cadastrarUsuarioCategoria" -> cadastrarUsuarioCategoria(json);
             case "logout" -> logout(json);
             default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -280,6 +294,15 @@ public class MainServer extends Thread {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public static void criarusuercateg(String json) {
+        Gson gson = new Gson();
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String ra = usuariodata.get("ra").getAsString();
+        JsonArray categoriasarary = usuariodata.get("categorias").getAsJsonArray();
+        int[] categorias = gson.fromJson(categoriasarary, int[].class);
+        userCategs.add(new UserCateg(ra, categorias));
     }
 
     public static String listarusuarios(String json, ArrayList<Usuario> usuarios) {
@@ -554,7 +577,7 @@ public class MainServer extends Thread {
 
     }
 
-    public static String listarAvisoa(String json) {
+    public static String listarAvisos(String json) {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
         int categoria = usuariodata.get("categoria").getAsInt();
@@ -590,7 +613,7 @@ public class MainServer extends Thread {
         if (logados.contains(token)) {
             if (usuariodata.has("id")) {
                 int id = usuariodata.get("id").getAsInt();
-                for (Aviso aviso: avisos) {
+                for (Aviso aviso : avisos) {
                     if (aviso.getId() == id) {
                         retorno = new RetornaLocalizarAviso(aviso);
                         return gson.toJson(retorno);
@@ -627,6 +650,59 @@ public class MainServer extends Thread {
         }
         return "{ \"status\": 401,\"operacao\": \"excluirAviso\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
+
+    public static String cadastrarUsuarioCategoria(String json) throws IOException {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token) || token.equals(usuariodata.get("ra").getAsString())) {
+                String ra = usuariodata.get("ra").getAsString();
+                int categoria = usuariodata.get("categoria").getAsInt();
+                boolean hasuser = false;
+                boolean hascateg = false;
+                for (Usuario usuario : usuarios) {
+                    if (usuario.getRA().equals(ra)) {
+                        hasuser = true;
+                        break;
+                    }
+                }
+                for (Categoria categoria1 : categorias) {
+                    if (categoria1.getId() == categoria) {
+                        hascateg = true;
+                        break;
+                    }
+                }
+                if (hasuser) {
+                    if (hascateg) {
+                        for (UserCateg userCateg : userCategs) {
+                            if (userCateg.getRa().equals(ra)) {
+                                userCateg.addCategoria(categoria);
+                                ModificadordeArquivos.modifyusercategFile(fileusercategs, userCategs);
+                                return "{\"status\": 201 ,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Cadastro em categoria realizado com sucesso\"}";
+
+                            }
+                        }
+                        UserCateg usercategnew = new UserCateg(ra, new int[]{categoria});
+                        boolean add = userCategs.add(usercategnew);
+                        ModificadordeArquivos.modifyusercategFile(fileusercategs, userCategs);
+                        return "{\"status\": 201 ,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Cadastro em categoria realizado com sucesso\"}";
+                    } else {
+                        return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
+                    }
+                } else {
+                    return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+                }
+            }else {
+                return "{\"status\": 401,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+        }
+
+    }
+
 }
 
 

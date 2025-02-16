@@ -2,6 +2,7 @@ package Servidor;
 
 import Base.Aviso;
 import Base.Categoria;
+import Base.UserCateg;
 import Base.Usuario;
 import com.google.gson.Gson;
 
@@ -57,6 +58,26 @@ public class ModificadordeArquivos {
         writer = new FileWriter(String.valueOf(fileToBeModified));
         try {
             for (Aviso datum : data) {
+                writer.write(gson.toJson(datum) + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    static void modifyusercategFile(String filePath, ArrayList<UserCateg> data) throws IOException {
+        File fileToBeModified = new File(filePath);
+        Gson gson = new Gson();
+        FileWriter writer;
+        writer = new FileWriter(String.valueOf(fileToBeModified));
+        try {
+            for (UserCateg datum : data) {
                 writer.write(gson.toJson(datum) + "\n");
             }
         } catch (IOException e) {

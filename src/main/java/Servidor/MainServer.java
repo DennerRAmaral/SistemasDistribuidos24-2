@@ -28,7 +28,7 @@ public class MainServer extends Thread {
     public static String fileusercategs = "usercateg.txt";
     public static String admin = "1234567";
 
-    public static void main() throws IOException {
+    public static void main(String[] args) throws IOException {
         usuarios = new ArrayList<>();
         categorias = new ArrayList<>();
         avisos = new ArrayList<>();

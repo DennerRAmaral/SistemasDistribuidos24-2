@@ -596,7 +596,7 @@ public class MainCliente {
         } else {
             System.out.println("====\nInsira o RA desejado (nao administradores nao podem acessar outros usuarios):");
             String ra = scan.nextLine();
-            ListarUserCateg listar = new ListarUserCateg(token, ra);
+            Listarusercateg listar = new Listarusercateg(token, ra);
             String json = gson.toJson(listar);
             String retorno;
             System.out.println("Enviando ao server:" + json);

@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class MainCliente {
@@ -79,6 +80,9 @@ public class MainCliente {
                       13 - Localizar Aviso
                       14 - Excluir Aviso
                       15 - Cadastrar Usuario em uma categoria
+                      16 - Listar categorias em que usuario esta cadastrado
+                      17 - Descadastrar Usuario em categoria
+                      18 - Receber avisos
                       20 - logout
                       0 - fechar""");
             userinput = scan.nextLine();
@@ -128,6 +132,15 @@ public class MainCliente {
                 case "15":
                     MainCliente.cadastrarusercateg(scan, gson, out, in);
                     break;
+                case "16":
+                    MainCliente.listarUsusarioCategoria(scan, gson, out, in);
+                    break;
+                case "17":
+                    MainCliente.descadastrarusercateg(scan, gson, out, in);
+                    break;
+                case "18":
+                    MainCliente.listaravisosdousuariomanual(scan, gson, out, in);
+                    break;
                 case "20":
                     MainCliente.efetuarlogout(gson, out, in);
                     break;
@@ -138,6 +151,8 @@ public class MainCliente {
                 default:
                     System.out.println("Opcao invalida\n");
             }
+            System.out.println("Aperte qualquer tecla");
+            scan.nextLine();
 
         }
         out.close();
@@ -162,6 +177,8 @@ public class MainCliente {
             if (retornojson.get("status").getAsInt() == 200) {
                 System.out.println("Login efetuado");
                 token = retornojson.get("token").getAsString();
+                listaravisosdousuario(out, gson, in, token);
+
             } else {
                 System.out.println(retornojson.get("mensagem").getAsString());
 
@@ -328,11 +345,7 @@ public class MainCliente {
                 retorno = in.readLine();
                 System.out.println("Recebido do Server: " + retorno);
                 JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
-                if (retornojson.get("status").getAsInt() == 200) {
-                    System.out.println(retornojson.get("mensagem").getAsString());
-                } else {
-                    System.out.println(retornojson.get("mensagem").getAsString());
-                }
+                System.out.println(retornojson.get("mensagem").getAsString());
             } else {
                 System.out.println("Dados de usuario invalidos");
             }
@@ -576,5 +589,86 @@ public class MainCliente {
             System.out.println("Nao esta logado");
         }
     }
+
+    protected static void listarUsusarioCategoria(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (token.isEmpty()) {
+            System.out.println("Nao esta logado ainda");
+        } else {
+            System.out.println("====\nInsira o RA desejado (nao administradores nao podem acessar outros usuarios):");
+            String ra = scan.nextLine();
+            ListarUserCateg listar = new ListarUserCateg(token, ra);
+            String json = gson.toJson(listar);
+            String retorno;
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            if (retornojson.get("status").getAsInt() == 201) {
+                JsonArray lista = retornojson.getAsJsonArray("categorias");
+                int[] userfound = gson.fromJson(lista, int[].class);
+                System.out.println("Categorias do Usuario encontradas: \n" + Arrays.toString(userfound));
+            } else {
+                System.out.println(retornojson.get("mensagem").getAsString());
+
+            }
+        }
+    }
+
+    protected static void descadastrarusercateg(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (!token.isEmpty()) {
+            System.out.println("====\nInsira o ra:");
+            String ra = scan.nextLine();
+            System.out.println("Insira o id da cataegoria:");
+            int categ = scan.nextInt();
+            scan.skip("\n");
+            String retorno;
+            DescadastrarUserCateg cad = new DescadastrarUserCateg(token, ra, categ);
+            String json = gson.toJson(cad);
+            System.out.println("Enviando ao server:" + json);
+            out.println(json);
+            retorno = in.readLine();
+            System.out.println("Recebido do Server: " + retorno);
+            JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+            System.out.println(retornojson.get("mensagem").getAsString());
+        } else {
+            System.out.println("Nao esta logado");
+        }
+    }
+
+    public static void listaravisosdousuariomanual(Scanner scan, Gson gson, PrintWriter out, BufferedReader in) throws IOException {
+        if (!token.isEmpty()) {
+            System.out.println("====\nInsira o ra:");
+            String ra = scan.nextLine();
+            listaravisosdousuario(out, gson, in, ra);
+        } else {
+            System.out.println("Nao esta logado");
+        }
+
+    }
+
+    public static void listaravisosdousuario(PrintWriter out, Gson gson, BufferedReader in, String ra) throws IOException {
+        ListarUserAvisos envio = new ListarUserAvisos(token, ra);
+        String json = gson.toJson(envio);
+        String retorno;
+        System.out.println("Enviando ao server:" + json);
+        out.println(json);
+        retorno = in.readLine();
+        System.out.println("Recebido do Server: " + retorno);
+        JsonObject retornojson = JsonParser.parseString(retorno).getAsJsonObject();
+        if (retornojson.get("status").getAsInt() == 201) {
+            JsonArray lista = retornojson.getAsJsonArray("avisos");
+            Aviso[] userArray = gson.fromJson(lista, Aviso[].class);
+            System.out.println("Lista de Categorias:");
+            for (Aviso aviso : userArray) {
+                System.out.println(aviso);
+            }
+        } else {
+            System.out.println(retornojson.get("mensagem").getAsString());
+
+        }
+
+    }
+
 
 }

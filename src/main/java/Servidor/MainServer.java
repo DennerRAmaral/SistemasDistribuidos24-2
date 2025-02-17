@@ -125,6 +125,12 @@ public class MainServer extends Thread {
                 retorno = action(inputLine);
                 System.out.println("Enviando ao cliente: " + retorno);
                 out.println(retorno);
+                System.out.println("Usuarios logados:");
+                for (Usuario user : usuarios) {
+                    if (logados.contains(user.getRA())) {
+                        System.out.println(user.getNome());
+                    }
+                }
             }
 
             out.close();
@@ -158,6 +164,9 @@ public class MainServer extends Thread {
             case "localizarAviso" -> localizaraviso(json);
             case "excluirAviso" -> excluirAviso(json);
             case "cadastrarUsuarioCategoria" -> cadastrarUsuarioCategoria(json);
+            case "listarUsuarioCategorias" -> listarUserCateg(json);
+            case "descadastrarUsuarioCategoria" -> excluirUsuarioCategoria(json);
+            case "listarUsuarioAvisos" -> listarAvisosUser(json);
             case "logout" -> logout(json);
             default -> ("{\"status\": 401,\"mensagem\":  \"Operacao nao encontrada\"}");
         };
@@ -407,6 +416,7 @@ public class MainServer extends Thread {
                     if (usuarios.get(i).getRA().equals(ra)) {
                         usuarios.remove(i);
                         ModificadordeArquivos.modifyuserFile(fileusers, usuarios);
+                        logados.remove(ra);
                         return "{ \"status\": 201,\"operacao\": \"excluirUsuario\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
                     }
                 }
@@ -685,7 +695,7 @@ public class MainServer extends Thread {
                             }
                         }
                         UserCateg usercategnew = new UserCateg(ra, new int[]{categoria});
-                        boolean add = userCategs.add(usercategnew);
+                        userCategs.add(usercategnew);
                         ModificadordeArquivos.modifyusercategFile(fileusercategs, userCategs);
                         return "{\"status\": 201 ,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Cadastro em categoria realizado com sucesso\"}";
                     } else {
@@ -694,7 +704,7 @@ public class MainServer extends Thread {
                 } else {
                     return "{\"status\": 401 ,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Usuario nao encontrado.\"}";
                 }
-            }else {
+            } else {
                 return "{\"status\": 401,\"operacao\": \"cadastrarUsuarioCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
         } else {
@@ -703,6 +713,133 @@ public class MainServer extends Thread {
 
     }
 
+    public static String listarUserCateg(String json) {
+        int[] categoriasachadas;
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        RetornoListarUserCateg retorno;
+        Gson gson = new Gson();
+        if (logados.contains(token)) {
+            if (token.equals(admin)) {
+                if (usuariodata.has("ra")) {
+                    String ra = usuariodata.get("ra").getAsString();
+                    for (UserCateg uc : userCategs) {
+                        if (uc.getRa().equals(ra)) {
+                            categoriasachadas = uc.getCategorias();
+                            retorno = new RetornoListarUserCateg(categoriasachadas);
+                            return gson.toJson(retorno);
+                        }
+                    }
+                    return "{\"status\": 401 ,\"operacao\": \"listarUsuarioCategorias\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+
+                } else {
+                    return "{\"status\": 401 ,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+                }
+            } else {
+                if (token.equals(usuariodata.get("ra").getAsString()) && usuariodata.has("ra")) {
+                    String ra = usuariodata.get("ra").getAsString();
+                    for (UserCateg uc : userCategs) {
+                        if (uc.getRa().equals(ra)) {
+                            categoriasachadas = uc.getCategorias();
+                            retorno = new RetornoListarUserCateg(categoriasachadas);
+                            return gson.toJson(retorno);
+                        }
+                    }
+                } else {
+                    return "{\"status\": 401,\"operacao\": \"listarUsuarioCategorias\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                }
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"listarUsuarioCategorias\",\"mensagem\":  \"Credenciais incorretas.\"}";
+        }
+        return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+    }
+
+    public static String excluirUsuarioCategoria(String json) throws IOException {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String token = usuariodata.get("token").getAsString();
+        if (token.isBlank())
+            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        if (logados.contains(token)) {
+            if (admin.contains(token) || token.equals(usuariodata.get("ra").getAsString())) {
+                String ra = usuariodata.get("ra").getAsString();
+                int categoria = usuariodata.get("categoria").getAsInt();
+                boolean hasuser = false;
+                boolean hascateg = false;
+                for (Usuario usuario : usuarios) {
+                    if (usuario.getRA().equals(ra)) {
+                        hasuser = true;
+                        break;
+                    }
+                }
+                for (Categoria categoria1 : categorias) {
+                    if (categoria1.getId() == categoria) {
+                        hascateg = true;
+                        break;
+                    }
+                }
+                if (hasuser) {
+                    if (hascateg) {
+                        for (UserCateg userCateg : userCategs) {
+                            if (userCateg.getRa().equals(ra)) {
+                                userCateg.removeCategoria(categoria);
+                                ModificadordeArquivos.modifyusercategFile(fileusercategs, userCategs);
+                                return "{\"status\": 201 ,\"operacao\": \"descadastrarUsuarioCategoria\",\"mensagem\":  \"Descadastro em categoria realizado com sucesso\"}";
+                            }
+                        }
+                        return "{\"status\": 401 ,\"operacao\": \"descadastrarUsuarioCategoria\",\"mensagem\":  \"Usuario nao cadastrado em nenhuma categoria\"}";
+                    } else {
+                        return "{\"status\": 401 ,\"operacao\": \"descadastrarUsuarioCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
+                    }
+                } else {
+                    return "{\"status\": 401 ,\"operacao\": \"descadastrarUsuarioCategoria\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+                }
+            } else {
+                return "{\"status\": 401,\"operacao\": \"descadastrarUsuarioCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            }
+        } else {
+            return "{\"status\": 401,\"operacao\": \"descadastrarUsuarioCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+        }
+
+    }
+
+    public static String listarAvisosUser(String json) {
+        JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
+        String retorno;
+        Gson gson = new Gson();
+        ArrayList<Aviso> avisosfiltrados = new ArrayList<>();
+        String token = usuariodata.get("token").getAsString();
+        if (logados.contains(token)) {
+            if (usuariodata.has("ra")) {
+                String ra = usuariodata.get("ra").getAsString();
+                for (Usuario usuario : usuarios) {
+                    if (usuario.getRA().equals(ra)) {
+                        for (UserCateg uc : userCategs) {
+                            if (uc.getRa().equals(ra)) {
+                                int[] categorias = uc.getCategorias();
+                                for (int categs : categorias) {
+                                    for (Aviso aviso : avisos) {
+                                        if (aviso.getCategoria() == categs) {
+                                            avisosfiltrados.add(aviso);
+                                        }
+                                    }
+                                }
+                                RetornaListarAvisosUsuario retornoj = new RetornaListarAvisosUsuario(avisosfiltrados);
+                                return gson.toJson(retornoj);
+                            }
+                        }
+                        return "{\"status\": 401 ,\"operacao\": \"listarUsuarioAvisos\",\"mensagem\":  \"Usuario sem categorias.\"}";
+                    }
+                }
+                return "{\"status\": 401 ,\"operacao\": \"listarUsuarioAvisos\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+
+            } else {
+                return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+            }
+        }
+        return "{\"status\": 401,\"operacao\": \"listarUsuarioAvisos\",\"mensagem\":  \"Credenciais incorretas\"}";
+
+    }
 }
 
 

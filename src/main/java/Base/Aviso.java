@@ -45,6 +45,6 @@ public class Aviso {
         this.categoria = categoria;
     }
     public String toString() {
-        return "Aviso ||" + "id: " + id + "|| categoria: " + categoria + "||\n TITULO: "+ titulo+"\n DESCRICAO: \n"+descricao;
+        return "Aviso ||" + "id: " + id + "|| categoria: " + categoria + "||\n TITULO: "+ titulo+"\n DESCRICAO: \n"+descricao+"\n---------------";
     }
 }

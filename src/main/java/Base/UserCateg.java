@@ -27,16 +27,6 @@ public class UserCateg {
         this.categorias = categorias;
     }
 
-    /*public String mostrarCategorias() {
-        String categ = "[";
-        for (int i : categorias) {
-            categ = categ.concat(i + ",");
-        }
-        categ = categ.substring(0, categ.lastIndexOf(','));
-        categ = categ.concat("]");
-        return categ;
-    }*/
-
     public void addCategoria(int i) {
         boolean alreadyhas = false;
         for (int categoria : categorias) {
@@ -45,12 +35,36 @@ public class UserCateg {
                 break;
             }
         }
-        if (!alreadyhas){
+        if (!alreadyhas) {
             int[] newArray;
             newArray = new int[categorias.length + 1];
             System.arraycopy(categorias, 0, newArray, 0, categorias.length);
             newArray[categorias.length] = i;
             categorias = newArray;
+        }
+
+    }
+
+
+    public void removeCategoria(int i) {
+        boolean alreadyhas = false;
+        for (int categoria : categorias) {
+            if (categoria == i) {
+                alreadyhas = true;
+                break;
+            }
+        }
+        if (alreadyhas) {
+            int k = 0;
+            int[] arr_new = new int[categorias.length - 1];
+            for (int categoria : categorias) {
+                if (categoria != i) {
+                    arr_new[k] = categoria;
+                    k++;
+                }
+                setCategorias(arr_new);
+            }
+
         }
 
     }

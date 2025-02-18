@@ -188,7 +188,7 @@ public class MainServer extends Thread {
                             return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Usuario ja logado\"}";
                         } else {
                             logados.add(String.valueOf(logindata.get("ra").getAsInt()));
-                            return "{\"operacao\": \"login\",\"status\": 200 , \"token\":  \"" + logindata.get("ra").getAsString() + "\"}";
+                            return "{\"status\":200,\"token\": \"" + logindata.get("ra").getAsString() + "\"}";
                         }
                     } else {
                         return "{\"status\": 401,\"operacao\": \"login\",\"mensagem\":  \"Credenciais incorretas.\"}";
@@ -231,10 +231,10 @@ public class MainServer extends Thread {
             if (logados.contains(token)) {
                 boolean sucessologout = logados.remove(token);
                 if (sucessologout) {
-                    return "{\"operacao\": \"logout\", \"status\": 200 }";
+                    return "{\"status\":200}";
                 }
             }
-            return "{\"status\": 401 ,\"operacao\": \"logout\",\"mensagem\":  \"Erro ao realizar logout.\"}";
+            return "{\"status\":401,\"operacao\": \"logout\",\"mensagem\":  \"Erro ao realizar logout.\"}";
         }
     }
 
@@ -323,10 +323,10 @@ public class MainServer extends Thread {
                 RetornaListarususarios lista = new RetornaListarususarios(usuarios);
                 return gson.toJson(lista);
             } else {
-                return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
+                return "{\"status\":401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
             }
         } else {
-            return "{\"status\": 401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
+            return "{\"status\":401,\"operacao\": \"listarUsuarios\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
     }
 
@@ -345,10 +345,10 @@ public class MainServer extends Thread {
                             return gson.toJson(retorno);
                         }
                     }
-                    return "{\"status\": 401 ,\"operacao\": \"localizarusuario\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+                    return "{\"status\":401,\"operacao\": \"localizarusuario\",\"mensagem\":  \"Usuario nao encontrado.\"}";
 
                 } else {
-                    return "{\"status\": 401 ,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+                    return "{\"status\":401,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
                 }
             } else {
                 if (token.equals(usuariodata.get("ra").getAsString()) && usuariodata.has("ra")) {
@@ -360,13 +360,13 @@ public class MainServer extends Thread {
                         }
                     }
                 } else {
-                    return "{\"status\": 401,\"operacao\": \"localirUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                    return "{\"status\":401,\"operacao\": \"localirUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
                 }
             }
         } else {
-            return "{\"status\": 401,\"operacao\": \"localizarUsuario\",\"mensagem\":  \"Credenciais incorretas.\"}";
+            return "{\"status\":401,\"operacao\": \"localizarUsuario\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
-        return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\":401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String editarUsuario(String json) throws IOException {
@@ -376,13 +376,13 @@ public class MainServer extends Thread {
         Usuario userupdate;
         JsonObject lista = usuariodata.getAsJsonObject("usuario");
         if (token.isBlank())
-            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+            return "{ \"status\":401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
             if (admin.contains(token) || lista.get("ra").getAsString().equals(token)) {
                 String userrecebido = lista.toString();
                 valido = new Validador(userrecebido);
                 if (valido.usuarioinvalido()) {
-                    return "{ \"status\": 401,\"operacao\": \"editarUsuario\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
+                    return "{ \"status\":401,\"operacao\": \"editarUsuario\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
                 } else {
                     String ra = lista.get("ra").getAsString();
                     String nome = lista.get("nome").getAsString();
@@ -392,23 +392,23 @@ public class MainServer extends Thread {
                             userupdate = new Usuario(ra, nome, senha);
                             usuarios.set(i, userupdate);
                             ModificadordeArquivos.modifyuserFile(fileusers, usuarios);
-                            return "{ \"status\": 201,\"operacao\": \"editarUsuario\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                            return "{ \"status\":201,\"operacao\": \"editarUsuario\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                         }
                     }
-                    return "{\"status\": 401 ,\"operacao\": \"editarUsuarios\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+                    return "{\"status\":401,\"operacao\": \"editarUsuarios\",\"mensagem\":  \"Usuario nao encontrado.\"}";
                 }
             } else {
-                return "{\"status\": 401,\"operacao\": \"editarUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                return "{\"status\":401,\"operacao\": \"editarUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
         }
-        return "{ \"status\": 401,\"operacao\": \"editarUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\":401,\"operacao\": \"editarUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String excluirUsuario(String json) throws IOException {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
         if (token.isBlank())
-            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+            return "{ \"status\":401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
             if (admin.contains(token) || token.equals(usuariodata.get("ra").getAsString())) {
                 String ra = usuariodata.get("ra").getAsString();
@@ -417,15 +417,15 @@ public class MainServer extends Thread {
                         usuarios.remove(i);
                         ModificadordeArquivos.modifyuserFile(fileusers, usuarios);
                         logados.remove(ra);
-                        return "{ \"status\": 201,\"operacao\": \"excluirUsuario\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
+                        return "{ \"status\":201,\"operacao\": \"excluirUsuario\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
                     }
                 }
-                return "{\"status\": 401 ,\"operacao\": \"excluirUsuario\",\"mensagem\":  \"Usuario nao encontrado.\"}";
+                return "{\"status\":401,\"operacao\": \"excluirUsuario\",\"mensagem\":  \"Usuario nao encontrado.\"}";
             }
         } else {
-            return "{\"status\": 401,\"operacao\": \"excluirUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            return "{\"status\":401,\"operacao\": \"excluirUsuario\",\"mensagem\":  \"Acesso nao autorizado.\"}";
         }
-        return "{ \"status\": 401,\"operacao\": \"excluirUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\":401,\"operacao\": \"excluirUsuario\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String salvarCategoria(String json) throws IOException {
@@ -433,38 +433,38 @@ public class MainServer extends Thread {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
         if (token.isBlank())
-            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+            return "{ \"status\":401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
             if (admin.contains(token)) {
                 JsonObject lista = usuariodata.getAsJsonObject("categoria");
                 String categoriarecebida = lista.toString();
                 valido = new Validador(categoriarecebida);
                 if (valido.categoriainvalida()) {
-                    return "{ \"status\": 401,\"operacao\": \"editarusuario\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
+                    return "{ \"status\":401,\"operacao\": \"editarusuario\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
                 } else {
                     int id = lista.get("id").getAsInt();
                     String nome = lista.get("nome").getAsString();
                     if (id == 0) {
                         criarcategoria(categoriarecebida);
                         ModificadordeArquivos.modifycategFile(filecategorias, categorias);
-                        return "{ \"status\": 201,\"operacao\": \"salvarCategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                        return "{ \"status\":201,\"operacao\": \"salvarCategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                     } else {
                         for (int i = 0; i < categorias.size(); i++) {
                             if (categorias.get(i).getId() == id) {
                                 Categoria newcateg = new Categoria(id, nome);
                                 categorias.set(i, newcateg);
                                 ModificadordeArquivos.modifycategFile(filecategorias, categorias);
-                                return "{ \"status\": 201,\"operacao\": \"salvarCategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                                return "{ \"status\":201,\"operacao\": \"salvarCategoria\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                             }
                         }
-                        return "{\"status\": 401 ,\"operacao\": \"salvarCategoria\",\"mensagem\":  \"Categoria nao encontrado.\"}";
+                        return "{\"status\":401,\"operacao\": \"salvarCategoria\",\"mensagem\":  \"Categoria nao encontrado.\"}";
                     }
                 }
             } else {
-                return "{\"status\": 401,\"operacao\": \"salvarCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                return "{\"status\":401,\"operacao\": \"salvarCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
         }
-        return "{ \"status\": 401,\"operacao\": \"salvarCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\":401,\"operacao\": \"salvarCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String listarcategorias(String json, ArrayList<Categoria> categorias) {
@@ -476,10 +476,10 @@ public class MainServer extends Thread {
                 RetornaListarCategorias lista = new RetornaListarCategorias(categorias);
                 return gson.toJson(lista);
             } else {
-                return "{\"status\": 401,\"operacao\": \"listarCategorias\",\"mensagem\":  \"Credenciais incorretas.\"}";
+                return "{\"status\":401,\"operacao\": \"listarCategorias\",\"mensagem\":  \"Credenciais incorretas.\"}";
             }
         } else {
-            return "{\"status\": 401,\"operacao\": \"listarCategorias\",\"mensagem\":  \"Credenciais incorretas.\"}";
+            return "{\"status\":401,\"operacao\": \"listarCategorias\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
     }
 
@@ -498,17 +498,17 @@ public class MainServer extends Thread {
                             return gson.toJson(retorno);
                         }
                     }
-                    return "{\"status\": 401 ,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
+                    return "{\"status\":401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
 
                 } else {
-                    return "{\"status\": 401 ,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
+                    return "{\"status\":401,\",\"mensagem\":  \"Os campos recebidos nao sao validos.\"}";
                 }
             } else {
-                return "{\"status\": 401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                return "{\"status\":401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
 
         } else {
-            return "{\"status\": 401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Credenciais incorretas.\"}";
+            return "{\"status\":401,\"operacao\": \"localizarCategoria\",\"mensagem\":  \"Credenciais incorretas.\"}";
         }
     }
 
@@ -516,7 +516,7 @@ public class MainServer extends Thread {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
         if (token.isBlank())
-            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+            return "{ \"status\":401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
             if (admin.contains(token)) {
                 int id = usuariodata.get("id").getAsInt();
@@ -524,15 +524,15 @@ public class MainServer extends Thread {
                     if (categorias.get(i).getId() == id) {
                         categorias.remove(i);
                         ModificadordeArquivos.modifycategFile(filecategorias, categorias);
-                        return "{ \"status\": 201,\"operacao\": \"excluirCategoria\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
+                        return "{ \"status\":201,\"operacao\": \"excluirCategoria\", \"mensagem\":  \"Exclusao realizada com sucesso.\"}";
                     }
                 }
-                return "{\"status\": 401 ,\"operacao\": \"excluirCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
+                return "{\"status\":401,\"operacao\": \"excluirCategoria\",\"mensagem\":  \"Categoria nao encontrada.\"}";
             }
         } else {
-            return "{\"status\": 401,\"operacao\": \"excluirCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+            return "{\"status\":401,\"operacao\": \"excluirCategoria\",\"mensagem\":  \"Acesso nao autorizado.\"}";
         }
-        return "{ \"status\": 401,\"operacao\": \"excluirCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\":401,\"operacao\": \"excluirCategoria\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
     }
 
     public static String salvarAviso(String json) throws IOException {
@@ -540,14 +540,14 @@ public class MainServer extends Thread {
         JsonObject usuariodata = JsonParser.parseString(json).getAsJsonObject();
         String token = usuariodata.get("token").getAsString();
         if (token.isBlank())
-            return "{ \"status\": 401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+            return "{ \"status\":401,\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
         if (logados.contains(token)) {
             if (admin.contains(token)) {
                 JsonObject lista = usuariodata.getAsJsonObject("aviso");
                 String avisorecebido = lista.toString();
                 valido = new Validador(avisorecebido);
                 if (valido.avisoinvalido()) {
-                    return "{ \"status\": 401,\"operacao\": \"salvarAviso\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
+                    return "{ \"status\":401,\"operacao\": \"salvarAviso\" , \"mensagem\":  \"Os campos recebidos não são válidos.}";
                 } else {
                     int id = lista.get("id").getAsInt();
                     int categoria = lista.get("categoria").getAsInt();
@@ -566,24 +566,24 @@ public class MainServer extends Thread {
                     if (id == 0) {
                         criaraviso(avisorecebido);
                         ModificadordeArquivos.modifyavisoFile(fileavisos, avisos);
-                        return "{ \"status\": 201,\"operacao\": \"salvarAviso\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                        return "{ \"status\":201,\"operacao\": \"salvarAviso\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                     } else {
                         for (int i = 0; i < avisos.size(); i++) {
                             if (avisos.get(i).getId() == id) {
                                 Aviso newaviso = new Aviso(id, categoria, titulo, descricao);
                                 avisos.set(i, newaviso);
                                 ModificadordeArquivos.modifyavisoFile(fileavisos, avisos);
-                                return "{ \"status\": 201,\"operacao\": \"salvarAviso\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
+                                return "{ \"status\":201,\"operacao\": \"salvarAviso\", \"mensagem\":  \"Edição realizada com sucesso.\"}";
                             }
                         }
-                        return "{\"status\": 401 ,\"operacao\": \"salvarAviso\",\"mensagem\":  \"Aviso nao encontrado.\"}";
+                        return "{\"status\":401,\"operacao\": \"salvarAviso\",\"mensagem\":  \"Aviso nao encontrado.\"}";
                     }
                 }
             } else {
-                return "{\"status\": 401,\"operacao\": \"salvarAviso\",\"mensagem\":  \"Acesso nao autorizado.\"}";
+                return "{\"status\":401,\"operacao\": \"salvarAviso\",\"mensagem\":  \"Acesso nao autorizado.\"}";
             }
         }
-        return "{ \"status\": 401,\"operacao\": \"salvarAviso\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
+        return "{ \"status\":401,\"operacao\": \"salvarAviso\"mensagem\":\"Não foi possível possível processar a requisição.\"}";
 
     }
 
@@ -604,14 +604,14 @@ public class MainServer extends Thread {
                     }
                 }
                 if (avisosfiltrados.isEmpty()) {
-                    return "{\"status\": 401 ,\"operacao\": \"listarAvisos\" ,\"mensagem\":  \"Categoria não encontrada;\"}";
+                    return "{\"status\":401,\"operacao\": \"listarAvisos\" ,\"mensagem\":  \"Categoria não encontrada;\"}";
                 } else {
                     RetornaListarAvisos lista = new RetornaListarAvisos(avisosfiltrados);
                     return gson.toJson(lista);
                 }
             }
         } else {
-            return "{\"status\": 401,\"operacao\": \"listarAvisos\",\"mensagem\":  \"Credenciais incorretas\"}";
+            return "{\"status\":401,\"operacao\": \"listarAvisos\",\"mensagem\":  \"Credenciais incorretas\"}";
         }
     }
 

@@ -1,2 +1,3 @@
 {"id":0,"categoria":0,"titulo":"PLACEHOLDER","descricao":"Placeholder para teste"}
-{"id":1,"categoria":1,"titulo":"TESTE DENOVO","descricao":"Outro teste"}
+{"id":1,"categoria":1,"titulo":"TESTE","descricao":"teste do dia dezessete de fevereiro"}
+{"id":2,"categoria":0,"titulo":"PLACEHOLDER ALTERADO","descricao":"Placeholder para teste"}
